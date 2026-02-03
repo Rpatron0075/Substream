@@ -34,7 +34,7 @@ public class Lobby_UIController : MonoBehaviour
         PopupLineWindowInit(root);
         HiddenContainerInit(root);
         ExitPannelButtonInit(root);
-        MainContentInit(root);
+        MainContentInit(GameObject.Find("UID_MainButtons").GetComponent<UIDocument>().rootVisualElement);
     }
 
     private void PannelInit(VisualElement root)

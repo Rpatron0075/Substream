@@ -307,7 +307,7 @@ MonoBehaviour:
   m_PanelSettings: {fileID: 11400000, guid: c6e32529f42ee6c43aba192a7d9388a1, type: 2}
   m_ParentUI: {fileID: 0}
   sourceAsset: {fileID: 9197481963319205126, guid: fd0c8cd39a3a57b43b8f3f24bfa5c7cb, type: 3}
-  m_SortingOrder: 0
+  m_SortingOrder: -10
 --- !u!4 &1610619459
 Transform:
   m_ObjectHideFlags: 0
@@ -367,6 +367,54 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _buttonEffect: 1
+--- !u!1 &1863969922
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1863969924}
+  - component: {fileID: 1863969923}
+  m_Layer: 5
+  m_Name: UID_MainButtons
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1863969923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1863969922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_PanelSettings: {fileID: 11400000, guid: c6e32529f42ee6c43aba192a7d9388a1, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 4ddb6c4690d42f1489fdf7e857a5ef0d, type: 3}
+  m_SortingOrder: 0
+--- !u!4 &1863969924
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1863969922}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2035700651
 GameObject:
   m_ObjectHideFlags: 0
@@ -523,5 +571,6 @@ SceneRoots:
   - {fileID: 2035700654}
   - {fileID: 581670352}
   - {fileID: 1610619459}
+  - {fileID: 1863969924}
   - {fileID: 1325884477}
   - {fileID: 7973131760965261163}

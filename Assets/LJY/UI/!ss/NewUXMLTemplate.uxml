@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="U_Container" style="flex-grow: 0; height: 10%; flex-shrink: 0; background-color: rgba(59, 59, 59, 0.85); flex-direction: row;">
+        <ui:VisualElement name="Coin" style="flex-grow: 0; flex-direction: row; flex-shrink: 0; width: 30%; height: 100%; background-color: rgba(168, 168, 168, 0.41); border-top-width: 22px; border-bottom-width: 22px; border-left-width: 54px; visibility: visible; overflow: hidden;">
+            <ui:Label tabindex="-1" text="보유재화" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="-unity-font-style: bold; font-size: 23%; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; -unity-text-align: middle-left;" />
+            <ui:Label tabindex="-1" text="99999999999999" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Value" style="font-size: 20%; -unity-font-style: bold; -unity-text-align: middle-left; border-left-width: 30px;" />
+        </ui:VisualElement>
+        <ui:Button text="설정" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Setting" style="position: absolute; height: 100%; width: 6%; right: 23px;" />
+    </ui:VisualElement>
+    <ui:VisualElement name="D_Container" style="flex-grow: 1; flex-shrink: 0; height: auto; flex-direction: row-reverse;">
+        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="Character" style="position: absolute; left: 3%; width: 30%; height: 100%; background-color: rgba(0, 0, 0, 0.15); align-items: flex-start; visibility: visible;" />
+        <ui:VisualElement name="Main_Container" style="flex-grow: 0; flex-shrink: 0; height: 100%; width: 65%; background-color: rgba(0, 0, 0, 0.12);" />
+    </ui:VisualElement>
+</ui:UXML>
