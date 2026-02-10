@@ -1,0 +1,54 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Template name="VT_CharacterWidget" src="project://database/Assets/LJY/UI/Lobby/VT_CharacterWidget.uxml?fileID=9197481963319205126&amp;guid=4117f1b178af0274fad9f59c04a3db1e&amp;type=3#VT_CharacterWidget" />
+    <ui:VisualElement name="Background" style="flex-grow: 1; width: 100%; height: 100%; background-color: rgb(40, 40, 40);">
+        <ui:VisualElement name="Header_Container" style="height: 10%; width: 100%; flex-direction: row; justify-content: space-between; align-items: center; background-color: rgba(59, 59, 59, 0.95); padding-left: 20px; padding-right: 20px; border-bottom-width: 2px; border-bottom-color: rgba(255, 255, 255, 0.1);">
+            <ui:VisualElement name="Coin_Panel" style="flex-direction: row; align-items: center; background-color: rgba(0, 0, 0, 0.5); border-radius: 10px; padding: 5px 15px; height: 70%;">
+                <ui:Label text="보유 재화" style="color: rgb(200, 200, 200); -unity-font-style: bold; font-size: 18px; margin-right: 15px;" />
+                <ui:Label name="Coin_Value" text="99,999,999" style="color: rgb(255, 215, 0); -unity-font-style: bold; font-size: 22px;" />
+            </ui:VisualElement>
+            <ui:Button name="Btn_Setting" text="⚙" style="width: 50px; height: 50px; font-size: 30px; background-color: rgba(0, 0, 0, 0.5); color: white; border-width: 0; border-radius: 10px;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Content_Container" style="flex-grow: 1; flex-direction: row;">
+            <ui:VisualElement name="Left_Panel" style="width: 30%; height: 100%; overflow: hidden;">
+                <ui:Instance template="VT_CharacterWidget" name="NPC_Widget" style="width: 100%; height: 100%; position: absolute; bottom: -50px;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="Right_Panel" style="flex-grow: 1; height: 100%; background-color: rgba(0, 0, 0, 0.2); padding: 20px;">
+                <ui:VisualElement name="Shop_Header" style="height: 60px; flex-direction: row; justify-content: flex-start; align-items: center; margin-bottom: 10px;">
+                    <ui:Button name="Btn_Refresh" text="새로고침" style="height: 45px; width: 120px; font-size: 18px; -unity-font-style: bold; background-color: rgb(200, 200, 200); border-radius: 5px;" />
+                </ui:VisualElement>
+                <ui:ScrollView mode="Vertical" style="flex-grow: 1; margin-bottom: 20px;">
+                    <ui:VisualElement name="Item_Grid_Container" style="flex-direction: row; flex-wrap: wrap; align-items: flex-start; justify-content: flex-start;">
+                        <ui:VisualElement name="Item_Slot_SafePoint" style="width: 23%; height: 250px; margin: 1%; background-color: rgb(220, 220, 220); border-radius: 8px; align-items: center; justify-content: space-between; padding: 10px; border-width: 2px; border-color: rgb(255, 100, 100);">
+                            <ui:Label text="Safe Point" style="font-size: 16px; -unity-font-style: bold; color: rgb(50, 50, 50); width: 100%; border-bottom-width: 1px; border-bottom-color: gray; padding-bottom: 5px;" />
+                            <ui:VisualElement name="Image_Placeholder" style="width: 100px; height: 100px; background-color: rgb(50, 50, 50);" />
+                            <ui:Label text="FREE" style="font-size: 18px; -unity-font-style: bold; color: red;" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="Item_Slot_1" style="width: 23%; height: 250px; margin: 1%; background-color: rgb(240, 240, 240); border-radius: 8px; align-items: center; justify-content: space-between; padding: 10px;">
+                            <ui:Label text="Item Name" style="font-size: 14px; color: rgb(50, 50, 50); width: 100%; border-bottom-width: 1px; border-bottom-color: gray; padding-bottom: 5px;" />
+                            <ui:VisualElement name="Image_Placeholder" style="width: 100px; height: 100px; background-color: black;" />
+                            <ui:Label text="1,000 G" style="font-size: 16px; -unity-font-style: bold;" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="Item_Slot_2" style="width: 23%; height: 250px; margin: 1%; background-color: rgb(240, 240, 240); border-radius: 8px; align-items: center; justify-content: space-between; padding: 10px;">
+                            <ui:Label text="Item Name" style="font-size: 14px; color: rgb(50, 50, 50); width: 100%; border-bottom-width: 1px; border-bottom-color: gray; padding-bottom: 5px;" />
+                            <ui:VisualElement name="Image_Placeholder" style="width: 100px; height: 100px; background-color: black;" />
+                            <ui:Label text="1,000 G" style="font-size: 16px; -unity-font-style: bold;" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="Item_Slot_3" style="width: 23%; height: 250px; margin: 1%; background-color: rgb(240, 240, 240); border-radius: 8px; align-items: center; justify-content: space-between; padding: 10px;">
+                            <ui:Label text="Item Name" style="font-size: 14px; color: rgb(50, 50, 50); width: 100%; border-bottom-width: 1px; border-bottom-color: gray; padding-bottom: 5px;" />
+                            <ui:VisualElement name="Image_Placeholder" style="width: 100px; height: 100px; background-color: black;" />
+                            <ui:Label text="1,000 G" style="font-size: 16px; -unity-font-style: bold;" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="Item_Slot_4" style="width: 23%; height: 250px; margin: 1%; background-color: rgb(240, 240, 240); border-radius: 8px; align-items: center; justify-content: space-between; padding: 10px;">
+                            <ui:Label text="Item Name" style="font-size: 14px; color: rgb(50, 50, 50); width: 100%; border-bottom-width: 1px; border-bottom-color: gray; padding-bottom: 5px;" />
+                            <ui:VisualElement name="Image_Placeholder" style="width: 100px; height: 100px; background-color: black;" />
+                            <ui:Label text="1,000 G" style="font-size: 16px; -unity-font-style: bold;" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:ScrollView>
+                <ui:VisualElement name="Shop_Footer" style="height: 80px; flex-direction: row; justify-content: flex-end; align-items: center;">
+                    <ui:Button name="Btn_Exit" text="나가기" style="width: 200px; height: 60px; background-color: rgb(180, 180, 180); font-size: 24px; -unity-font-style: bold;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,6 +1,12 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:Template name="VT_CharacterWidget" src="project://database/Assets/LJY/UI/Lobby/VT_CharacterWidget.uxml?fileID=9197481963319205126&amp;guid=4117f1b178af0274fad9f59c04a3db1e&amp;type=3#VT_CharacterWidget" />
+    <ui:Template name="VT_MainButtons" src="project://database/Assets/LJY/UI/Lobby/VT_MainButtons.uxml?fileID=9197481963319205126&amp;guid=4ddb6c4690d42f1489fdf7e857a5ef0d&amp;type=3#VT_MainButtons" />
     <Style src="project://database/Assets/LJY/UI/Lobby/SS_Lobby.uss?fileID=7433441132597879392&amp;guid=20e7f3d422aa28c4f83c6f3de3ea0771&amp;type=3#SS_Lobby" />
-    <ui:VisualElement name="Lobby" style="flex-grow: 1; align-items: stretch; justify-content: space-around; flex-direction: column; transform-origin: center; background-color: rgba(0, 0, 0, 0.45); background-image: url(&quot;project://database/Assets/LJY/UI/Lobby/backGround.png?fileID=21300000&amp;guid=3d3670fd4d08ee04ca32177aa82d589c&amp;type=3#backGround&quot;); -unity-background-scale-mode: scale-and-crop;">
+    <ui:VisualElement name="Lobby" style="flex-grow: 1; align-items: stretch; justify-content: space-around; flex-direction: column-reverse; transform-origin: center; background-color: rgba(0, 0, 0, 0.45); background-image: url(&quot;project://database/Assets/LJY/UI/Lobby/backGround.png?fileID=21300000&amp;guid=3d3670fd4d08ee04ca32177aa82d589c&amp;type=3#backGround&quot;); -unity-background-scale-mode: scale-and-crop;">
+        <ui:VisualElement name="Main_Container" style="flex-grow: 1; width: 100%; height: 80%; flex-direction: row; right: auto; justify-content: space-between; align-self: flex-end; align-items: flex-end;">
+            <ui:Instance template="VT_CharacterWidget" name="VT_CharacterWidget" style="position: absolute; flex-shrink: 0; width: 60%; height: 150%; bottom: -44%; left: 6%;" />
+            <ui:Instance template="VT_MainButtons" name="VT_MainButtons" style="position: absolute; flex-shrink: 0; width: 40%; height: 80%; right: 4%; bottom: 10%;" />
+        </ui:VisualElement>
         <ui:VisualElement name="Sub_UI" style="flex-grow: 0; flex-direction: row; justify-content: space-between; flex-shrink: 0; align-items: stretch; align-self: auto; height: 16%;">
             <ui:GroupBox name="LU_UI_Container" style="margin-top: 2%; margin-right: 0; margin-bottom: 0; margin-left: 5%; padding-top: 0; padding-bottom: 0; width: 20%; height: 75%; translate: 0 0; padding-left: 0; flex-direction: row; justify-content: flex-start; flex-grow: 1;">
                 <ui:VisualElement name="VisualElement" style="flex-basis: auto; width: 30%; height: 82%; align-items: center;">
@@ -34,12 +40,6 @@
                     <ui:Button text="Announ&#10;cement" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Announcement" class="sub_RU-button" style="flex-grow: 0; width: 5%; height: 60%;" />
                 </ui:VisualElement>
             </ui:GroupBox>
-        </ui:VisualElement>
-        <ui:VisualElement name="Main_Container" style="flex-grow: 1; width: 100%; height: 80%; flex-direction: row; right: auto; justify-content: space-between; align-self: flex-end; align-items: flex-end;">
-            <ui:Button text="Button" parse-escape-sequences="true" display-tooltip-when-elided="true" name="LD_Button" class="LD-button" style="display: flex; overflow: hidden; flex-grow: 0; width: 38%; position: absolute; left: 223px;">
-                <ui:VisualElement name="LD_Character_image" style="flex-grow: 0; background-color: rgba(0, 0, 0, 0); background-image: url(&quot;project://database/Assets/LJY/a.png?fileID=21300000&amp;guid=5d217f9bfbb438f448b185b1f6893f66&amp;type=3#a&quot;); margin-right: 2%; margin-left: 0; -unity-slice-left: 0; -unity-slice-top: 0; -unity-slice-right: 0; -unity-slice-bottom: 0; -unity-background-scale-mode: scale-to-fit; padding-right: 0; padding-top: 0; padding-bottom: 0; padding-left: 0; margin-top: 0; margin-bottom: 0; flex-shrink: 0; position: absolute; height: 150%; width: 150%; transform-origin: center; translate: 0 25px; -unity-slice-scale: 0; align-self: flex-start; left: -60px; top: -66px;" />
-            </ui:Button>
-            <ui:VisualElement name="Line_Window" class="line_window-popdown" />
         </ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="Window_Container" style="flex-grow: 1; position: absolute; flex-shrink: 0; width: 100%; height: 100%; align-items: center; justify-content: center; display: none;">

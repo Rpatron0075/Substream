@@ -128,12 +128,12 @@
 }
 
 .line_window-popdown {
-    flex-grow: 1;
+    flex-grow: 0;
     position: absolute;
-    width: 15%;
+    width: 23%;
     height: 15%;
-    left: 25%;
-    top: 45%;
+    left: 23%;
+    top: 40%;
     background-color: rgba(0, 0, 0, 0.59);
     opacity: 0;
     transition-duration: 0.8s;
@@ -147,8 +147,8 @@
     transition-timing-function: ease-in-circ;
     transition-duration: 0.8s;
     position: absolute;
-    left: 25%;
-    top: 45%;
+    left: 23%;
+    top: 40%;
 }
 
 .LD-button {

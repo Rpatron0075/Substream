@@ -13,9 +13,6 @@ public class Lobby_UIController : MonoBehaviour
     private Button _exitPannelButton;
     private VisualElement _pannel;
 
-    private Button _popupLineWindowButton;
-    private VisualElement _lineWindow;
-
     [SerializeField] private List<string> _mainContentButtons;
     private Dictionary<string, string> _mainContentScenes = new Dictionary<string, string>();
 
@@ -31,10 +28,9 @@ public class Lobby_UIController : MonoBehaviour
         _soundManager = GetComponent<SoundManager>();
 
         PannelInit(root);
-        PopupLineWindowInit(root);
         HiddenContainerInit(root);
         ExitPannelButtonInit(root);
-        MainContentInit(GameObject.Find("UID_MainButtons").GetComponent<UIDocument>().rootVisualElement);
+        MainContentInit(root);
     }
 
     private void PannelInit(VisualElement root)
@@ -46,15 +42,6 @@ public class Lobby_UIController : MonoBehaviour
         }
         _pannel = root.Q<VisualElement>("Window_Container");
         _pannel.style.display = DisplayStyle.None;
-    }
-
-    private void PopupLineWindowInit(VisualElement root)
-    {
-        _popupLineWindowButton = root.Q<Button>("LD_Button");
-        _popupLineWindowButton.RegisterCallback<ClickEvent>(OnPopupLine);
-
-        _lineWindow = root.Q<VisualElement>("Line_Window");
-        _lineWindow.style.display = DisplayStyle.None;
     }
 
     private void HiddenContainerInit(VisualElement root)
@@ -77,8 +64,7 @@ public class Lobby_UIController : MonoBehaviour
     private void MainContentInit(VisualElement root)
     {
         // 메인 컨텐츠 씬으로 이동하는 버튼 연결 작업
-        foreach (string name in _mainContentButtons)
-        {
+        foreach (string name in _mainContentButtons) {
             Button button = root.Q<Button>(name);
             button.RegisterCallback<ClickEvent>(OnLoadingScreen);
             _soundManager.SetButtonSoundEvent<PointerEnterEvent>(button, audioClips[(int)SoundTrack.b_hover]);
@@ -115,13 +101,9 @@ public class Lobby_UIController : MonoBehaviour
 
     private void OnTransitionEndEvents(TransitionEndEvent evt)
     {
-        if (!_hiddenButtonContainer.ClassListContains("hidden_button-container_unfold"))
-        {
+        if (!_hiddenButtonContainer.ClassListContains("hidden_button-container_unfold")) {
             _hiddenButtonContainer.style.display = DisplayStyle.None;
         }
-
-        if (!_lineWindow.ClassListContains("line_window-popup"))
-            _lineWindow.style.display = DisplayStyle.None;
 
         _isAnimating = false;
     }
@@ -134,19 +116,6 @@ public class Lobby_UIController : MonoBehaviour
     private void OnExitPannel(ClickEvent evt)
     {
         _pannel.style.display = DisplayStyle.None;
-    }
-
-    private void OnPopupLine(ClickEvent evt)
-    {
-        _lineWindow.style.display = DisplayStyle.Flex;
-        _lineWindow.AddToClassList("line_window-popup");
-
-        Invoke("OnPopdownLine", 5f);
-    }
-
-    private void OnPopdownLine()
-    {
-        _lineWindow.RemoveFromClassList("line_window-popup");
     }
 
     // 클릭한 버튼의 이름(key)을 이용해 해당 씬 이름을 딕셔너리에서 가져온 후 로딩 처리 시작

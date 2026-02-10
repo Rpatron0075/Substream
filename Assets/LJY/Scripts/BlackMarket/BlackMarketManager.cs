@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public enum ItemRarity
@@ -10,6 +11,7 @@ public enum ItemRarity
 }
 
 [System.Serializable]
+[Tooltip("멤버십  단계에 도달 시, 아이템의 희귀도율을 설정한다.")]
 struct RarityProbability
 {
     [Tooltip("멤버십 단계 이름")]
@@ -102,7 +104,10 @@ public class BlackMarketManager : MonoBehaviour
             }
         }
 
+        // 정해진 멤버십 Level 을 넘지 않도록
         _currentMembershipLevel = Mathf.Clamp(_currentMembershipLevel, 0, rarityProbabilities.Count - 1);
+
+        // 멤버십 Level에 따라 현재의 각 희귀도별 카드 및 오파츠 등장 확률이 다르게 설정되도록 함
         _currentProbability = rarityProbabilities[_currentMembershipLevel];
     }
 
@@ -114,6 +119,11 @@ public class BlackMarketManager : MonoBehaviour
         int totalWeight = _currentProbability.GetTotalWeight();
         int randomValue = Random.Range(0, totalWeight);
 
+        // 범위 초과 시
+        if (randomValue >= totalWeight) {
+            randomValue = randomValue % totalWeight;
+        }
+        
         // 가중치 랜덤
         if (randomValue < _currentProbability.CommonWeight)
             return ItemRarity.Common;
