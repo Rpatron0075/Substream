@@ -5,7 +5,6 @@ public class CharacterWidgetController : MonoBehaviour
 {
     private Button _characterButton;
     private VisualElement _lineWindow;
-    private bool _isPopupActive = false;
 
     private const string POPUP_CLASS = "line_window-popup";
 

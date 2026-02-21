@@ -134,8 +134,11 @@ GameObject:
   - component: {fileID: 155224124}
   - component: {fileID: 155224126}
   - component: {fileID: 155224127}
+  - component: {fileID: 155224128}
+  - component: {fileID: 155224129}
+  - component: {fileID: 155224130}
   m_Layer: 5
-  m_Name: UIDocument
+  m_Name: UID_NodeMap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -155,7 +158,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_PanelSettings: {fileID: 11400000, guid: c6e32529f42ee6c43aba192a7d9388a1, type: 2}
   m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: 040e64304515058408fd65bea76cf5cd, type: 3}
+  sourceAsset: {fileID: 9197481963319205126, guid: 72236e06f9510b841a1a2843ef953a14, type: 3}
   m_SortingOrder: 0
 --- !u!4 &155224125
 Transform:
@@ -184,16 +187,100 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 243c29b788e266c4883580f402b44a29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  savingsThresholds: 
-  membershipThresholds: 
+  _blackMarketUID: {fileID: 155224124}
+  _blackMarketUXML: {fileID: 9197481963319205126, guid: 040e64304515058408fd65bea76cf5cd, type: 3}
+  savingsThresholds:
+  - value: 0
+    additiveSlots: 0
+    additiveRefreshing: 0
+  - value: 50
+    additiveSlots: 1
+    additiveRefreshing: 0
+  - value: 100
+    additiveSlots: 2
+    additiveRefreshing: 0
+  - value: 150
+    additiveSlots: 2
+    additiveRefreshing: 1
+  - value: 250
+    additiveSlots: 3
+    additiveRefreshing: 1
+  - value: 400
+    additiveSlots: 4
+    additiveRefreshing: 1
+  - value: 700
+    additiveSlots: 4
+    additiveRefreshing: 2
+  - value: 999
+    additiveSlots: 5
+    additiveRefreshing: 2
+  - value: 999
+    additiveSlots: 6
+    additiveRefreshing: 2
+  membershipThresholds: 000000003200000064000000c80000002c010000
   rarityProbabilities:
-  - LevelName: 
-    CommonWeight: 0
-    RareWeight: 0
-    UniqueWeight: 0
-    LegendaryWeight: 0
+  - Name: "0\uB2E8\uACC4"
+    CommonWeight: 80
+    RareWeight: 50
+    UniqueWeight: 20
+    LegendaryWeight: 2
+  - Name: "1\uB2E8\uACC4"
+    CommonWeight: 60
+    RareWeight: 70
+    UniqueWeight: 40
+    LegendaryWeight: 10
+  - Name: "2\uB2E8\uACC4"
+    CommonWeight: 40
+    RareWeight: 60
+    UniqueWeight: 70
+    LegendaryWeight: 20
+  - Name: "3\uB2E8\uACC4"
+    CommonWeight: 20
+    RareWeight: 40
+    UniqueWeight: 50
+    LegendaryWeight: 30
   _baseSlotCount: 6
 --- !u!114 &155224127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 155224123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7fe6c36fd4c449428fc9f8a5115006f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &155224128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 155224123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35c46a9de82c18247bbe0d418716b924, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _exitBtnName: Btn_Exit
+  _refreshBtnName: Btn_Refresh
+  _settingBtnName: Btn_Setting
+--- !u!114 &155224129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 155224123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5d50a33229b87d4c83f433dcb149ea3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _enterButtonName: Button
+--- !u!114 &155224130
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
