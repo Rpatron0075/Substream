@@ -29,7 +29,7 @@ namespace UI.BlackMarket
             }
 
             if (_settingBtn != null) {
-                _settingBtn.clicked -= OnPopUpSetting;
+                _settingBtn.clicked -= OnPopUpSettingPanel;
             }
         }
 
@@ -37,7 +37,7 @@ namespace UI.BlackMarket
         /// UI가 생성된 후 Manager에 의해 호출되어 버튼을 연결
         /// </summary>
         /// <param name="root">블랙마켓 UI의 루트 요소</param>
-        public void BindUI(VisualElement root)
+        public void ConnectButtonEvt(VisualElement root)
         {
             _exitBtn = root.Q<Button>(_exitBtnName);
             _refreshBtn = root.Q<Button>(_refreshBtnName);
@@ -54,7 +54,7 @@ namespace UI.BlackMarket
             else Debug.LogWarning($"Button '{_refreshBtnName}' 를 찾을 수 없습니다");
 
             if (_settingBtn != null) {
-                _settingBtn.clicked += OnPopUpSetting;
+                _settingBtn.clicked += OnPopUpSettingPanel;
             }
             else Debug.LogWarning($"Button '{_settingBtnName}' 를 찾을 수 없습니다");
         }
@@ -71,9 +71,9 @@ namespace UI.BlackMarket
             // 슬롯 UI 업데이트 진행
         }
 
-        private void OnPopUpSetting()
+        private void OnPopUpSettingPanel()
         {
-            Debug.Log("설정 클릭");
+            BlackMarketManager.Instance.OpenSettingPanel();
         }
     }
 }
