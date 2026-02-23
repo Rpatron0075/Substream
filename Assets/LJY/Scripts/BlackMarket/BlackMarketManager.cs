@@ -1,18 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static UnityEditor.Progress;
 
 namespace UI.BlackMarket
 {
-    public enum ItemRarity
-    {
-        Common,
-        Rare,
-        Unique,
-        Legendary
-    }
-
     [System.Serializable]
     [Tooltip("멤버십 단계별 각 희귀도의 아이템 등장확률을 설정한다.")]
     struct RarityProbability
@@ -38,38 +29,127 @@ namespace UI.BlackMarket
         [Range(0, 10)] public int additiveRefreshing;
     }
 
-    [System.Serializable]
-    enum ItemType
+    #region ItemData
+    public enum ItemRarity
     {
-        Card = 0,
-        Oparts = 1, 
+        Common,
+        Rare,
+        Unique,
+        Legendary
     }
 
     [System.Serializable]
     class ItemData
     {
+        public int ID;
         public string Name;
-        public ItemType Type;
         public ItemRarity Rarity;
         public int Price;
         public Sprite Image;
     }
 
+    class CardData : ItemData
+    {
+        public int OwnerCharacterID;
+    }
+
+    class OpartsData : ItemData
+    {
+        public bool CanAppearShop;
+    }
+    #endregion
+
     class ItemDatabase
     {
-        public ItemData GetRandomItem(ItemRarity rarity)
+        private List<ItemData> _masterItemDB = new List<ItemData>();
+
+        private List<CardData> _curCardPool = new List<CardData>();
+        private List<OpartsData> _curOpartsPool = new List<OpartsData>();
+
+        /// <summary>
+        /// 이번 블랙마켓 씬에 등장할 수 있는 전체 아이템 풀 세팅
+        /// </summary>
+        public void CreateItemPool(List<int> partyCharacterIDs, List<int> ownedOpartsIDs)
         {
-            int value = Random.Range(0, 100);
+            _curCardPool.Clear();
+            _curOpartsPool.Clear();
 
-            // csv로 작성된 DB에서 해당하는 아이템 번호를 가져옴
-            // 카드와 오파츠의 비율은 최소값을 보장하되 그 이상으로는 무작위에 의존한다.
+            foreach (var item in _masterItemDB) {
+                if (item is CardData card) {
+                    // 파티 내 캐릭터의 ID와 일치하는 카드만 추가
+                    if (partyCharacterIDs.Contains(card.OwnerCharacterID)) {
+                        _curCardPool.Add(card);
+                    }
+                }
+                else if (item is OpartsData oparts) {
+                    // 상점 등장 가능한 오파츠이면서, 현재 보유 중이 아닌 경우만 추가
+                    if (oparts.CanAppearShop && !ownedOpartsIDs.Contains(oparts.ID)) {
+                        _curOpartsPool.Add(oparts);
+                    }
+                }
+            }
+        }
 
-            return new ItemData {
-                Name = "dummy_Item",
-                Type = ItemType.Card,
-                Rarity = rarity,
-                Price = 0,
-                Image = null
+        /// <summary>
+        /// 요청한 타입에 맞춰 해당 풀에서 아이템 추출
+        /// </summary>
+        /// <param name="type">요청한 아이템 타입</param>
+        /// <param name="rarity">희귀도</param>
+        /// <returns>아이템 데이터</returns>
+        public ItemData GetRandomItem(System.Type type, ItemRarity rarity)
+        {
+            if (type == typeof(CardData)) {
+                return ExtractItem(_curCardPool, rarity, type);
+            }
+            else if (type == typeof(OpartsData)) {
+                return ExtractItem(_curOpartsPool, rarity, type);
+            }
+
+            Debug.LogError($"알 수 없는 타입 요청 : {type}");
+            return null;
+        }
+
+        private ItemData ExtractItem<T>(List<T> pool, ItemRarity rarity, System.Type type) where T : ItemData
+        {
+            // 해당 희귀도의 아이템 필터링
+            List<T> filteredItems = pool.FindAll(item => item.Rarity == rarity);
+
+            // 해당 희귀도의 아이템이 소진되었을 경우의 예외 처리
+            if (filteredItems.Count == 0) {
+                if (pool.Count == 0) {
+                    Debug.LogWarning($"[{type.Name}]\n" +
+                        $"  타입의 남은 아이템이 풀에 없습니다\n" +
+                        $"  더미 아이템으로 대체됩니다\n");
+                    return GetDummyItem(type, rarity); // 풀이 완전 고갈 시 더미 반환
+                }
+
+                // 희귀도 상관없이 남은 아이템 중 하나를 반환
+                filteredItems = pool;
+            }
+
+            int ranIdx = Random.Range(0, filteredItems.Count);
+            T selectedItem = filteredItems[ranIdx];
+
+            // 상점 내 중복 등장 방지를 위해 풀에서 즉시 제거
+            pool.Remove(selectedItem);
+
+            return selectedItem;
+        }
+
+        private ItemData GetDummyItem(System.Type type, ItemRarity rarity)
+        {
+            if (type == typeof(CardData)) {
+                return new CardData { 
+                    ID = 000, 
+                    Name = "품절된 카드", 
+                    Rarity = rarity, 
+                    Price = 0 };
+            }
+            return new OpartsData { 
+                ID = 000, 
+                Name = "품절된 오파츠", 
+                Rarity = rarity, 
+                Price = 0 
             };
         }
     }
@@ -309,24 +389,73 @@ namespace UI.BlackMarket
         /// </summary>
         public void StartMarket()
         {
-            // <---- 보유 재화 업데이트 ---->
-            // 유저 데이터를 스크립터블 오브젝트로 가져오는 로직이 완성되면 적용 가능
+            var ddoManager = DontDestroyOnLoadManager.Instance;
+            if (ddoManager != null && ddoManager.ResourceManager != null) {
+                // int curUserID = ddoManager.ResourceManager.SelectUserID;
+                // var curUserData = ddoManager.LocalUser(curUserID);
 
-            //int onHand = _localUserData.LocalUserList.Gold;
-            //string coinTxt = onHand.ToString("N0");
-            _coinValue.text = "999,999,999,999,998";
-            // ----------------------------------
+                // List<int> currentPartyIDs = curUserData.PartyCharacterIDs;
+                // List<int> ownedOpartsIDs = curUserData.OwnedOpartsIDs;
+                // _coinValue.text = curUserData.Gold.ToString("N0");
+
+                // <---- 임시 더미 데이터 ---->
+                List<int> curPartyIDs = new List<int> { 1, 2, 3 };
+                List<int> ownedOpartsIDs = new List<int> { 101 };
+                _coinValue.text = "999,999,999,999,998";
+
+                // 조건에 맞는 아이템 풀 사전 생성
+                _itemDatabase.CreateItemPool(curPartyIDs, ownedOpartsIDs);
+            }
+
+            List<System.Type> curSlotTypes = GenerateSlotTypes(TotalSlotCount);
 
             _itemsData.Clear();
 
             // 슬롯 개수만큼 아이템 생성
-            int totalSlots = TotalSlotCount;
-            for (int i = 0; i < totalSlots; i++) {
-                ItemRarity rarity = GetRandomRarity(); // 현재 등급에 맞는 희귀도 결정 
-                _itemsData.Add(_itemDatabase.GetRandomItem(rarity)); // 해당 희귀도의 아이템 로드
+            for (int i = 0; i < TotalSlotCount; i++) {
+                ItemRarity rarity = GetRandomRarity(); // 현재 등급에 맞는 희귀도 결정
+                System.Type requiredType = curSlotTypes[i];
+                var itemData = _itemDatabase.GetRandomItem(requiredType, rarity);
+                if (itemData == null) {
+                    Debug.LogWarning($"아이템을 불러올 수 없습니다\n\n" +
+                        $"[ 조건 ]\n" +
+                        $"  아이템 타입 : {requiredType},\n" +
+                        $"  희귀도 : {rarity}");
+                    continue;
+                }
+                _itemsData.Add(itemData); // 해당 희귀도의 아이템 로드
             }
 
             BindSlotUI();
+        }
+
+        /// <summary>
+        /// System.Type을 활용하여 슬롯 개수에 맞춰 카드 3장, 오파츠 2개를 보장하는 타입 리스트 생성
+        /// </summary>
+        private List<System.Type> GenerateSlotTypes(int totalSlotCount)
+        {
+            List<System.Type> slotTypes = new List<System.Type>();
+
+            // 최소 수량 보장
+            slotTypes.Add(typeof(CardData));
+            slotTypes.Add(typeof(CardData));
+            slotTypes.Add(typeof(CardData));
+            slotTypes.Add(typeof(OpartsData));
+            slotTypes.Add(typeof(OpartsData));
+
+            // 나머지 랜덤 할당
+            for (int i = 5; i < totalSlotCount; i++) {
+                slotTypes.Add(Random.Range(0, 2) == 0 ? typeof(CardData) : typeof(OpartsData));
+            }
+
+            for (int i = 0; i < slotTypes.Count; i++) {
+                int tempIdx = Random.Range(i, slotTypes.Count);
+                System.Type temp = slotTypes[i];
+                slotTypes[i] = slotTypes[tempIdx];
+                slotTypes[tempIdx] = temp;
+            }
+
+            return slotTypes;
         }
 
         private void BindSlotUI()
@@ -364,7 +493,7 @@ namespace UI.BlackMarket
         /// <summary>
         /// 현재 멤버십 등급에 맞춰 랜덤한 희귀도를 반환하는 함수
         /// </summary>
-        public ItemRarity GetRandomRarity()
+        private ItemRarity GetRandomRarity()
         {
             int totalWeight = _currentProbability.GetTotalWeight();
             int randomValue = Random.Range(0, totalWeight);
@@ -384,18 +513,13 @@ namespace UI.BlackMarket
             return ItemRarity.Legendary;
         }
         
-        public Color GetRarityColor(ItemRarity rarity)
+        private Color GetRarityColor(ItemRarity rarity)
         {
-            switch (rarity)
-            {
-                case ItemRarity.Common :
-                    return Color.black;
-                case ItemRarity.Rare :
-                    return Color.red;
-                case ItemRarity.Unique :
-                    return Color.blue;
-                case ItemRarity.Legendary :
-                    return Color.yellow;
+            switch (rarity) {
+                case ItemRarity.Common : return Color.black;
+                case ItemRarity.Rare : return Color.red;
+                case ItemRarity.Unique : return Color.blue;
+                case ItemRarity.Legendary : return Color.yellow;
                 default :
                     Debug.LogError("아이템 희귀도 색깔 미지정");
                     return Color.black;
