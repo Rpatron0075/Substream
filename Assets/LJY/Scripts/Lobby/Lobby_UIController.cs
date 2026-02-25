@@ -37,8 +37,7 @@ namespace UI.Lobby
 
         private void PannelInit(VisualElement root)
         {
-            foreach (string name in _popupPannelButtons)
-            {
+            foreach (string name in _popupPannelButtons) {
                 Button button = root.Q<Button>(name);
                 button.RegisterCallback<ClickEvent>(OnPopupWindow);
             }
@@ -66,8 +65,7 @@ namespace UI.Lobby
         private void MainContentInit(VisualElement root)
         {
             // 메인 컨텐츠 씬으로 이동하는 버튼 연결 작업
-            foreach (string name in _mainContentButtons)
-            {
+            foreach (string name in _mainContentButtons) {
                 Button button = root.Q<Button>(name);
                 button.RegisterCallback<ClickEvent>(OnLoadingScreen);
                 _soundManager.SetButtonSoundEvent<PointerEnterEvent>(button, audioClips[(int)SoundTrack.b_hover]);
@@ -80,8 +78,7 @@ namespace UI.Lobby
                 button => button.Contains("-")
                 ? button.Substring(0, button.IndexOf("-")) + "Scene" : button + "Scene").ToList();
 
-            foreach (string name in _mainContentButtons)
-            {
+            foreach (string name in _mainContentButtons) {
                 _mainContentScenes.Add(name, SceneNameList[_mainContentButtons.IndexOf(name)]);
             }
         }
@@ -91,12 +88,10 @@ namespace UI.Lobby
             if (_isAnimating) return;
             _isAnimating = true;
 
-            if (_hiddenButtonContainer.ClassListContains("hidden_button-container_unfold"))
-            {
+            if (_hiddenButtonContainer.ClassListContains("hidden_button-container_unfold")) {
                 _hiddenButtonContainer.RemoveFromClassList("hidden_button-container_unfold");
             }
-            else
-            {
+            else {
                 _hiddenButtonContainer.style.display = DisplayStyle.Flex;
                 _hiddenButtonContainer.AddToClassList("hidden_button-container_unfold");
             }
@@ -104,8 +99,7 @@ namespace UI.Lobby
 
         private void OnTransitionEndEvents(TransitionEndEvent evt)
         {
-            if (!_hiddenButtonContainer.ClassListContains("hidden_button-container_unfold"))
-            {
+            if (!_hiddenButtonContainer.ClassListContains("hidden_button-container_unfold")) {
                 _hiddenButtonContainer.style.display = DisplayStyle.None;
             }
 
@@ -126,10 +120,8 @@ namespace UI.Lobby
         private void OnLoadingScreen(ClickEvent evt)
         {
             Button clickedButton = evt.currentTarget as Button;
-            if (clickedButton != null)
-            {
-                if (_mainContentScenes.TryGetValue(clickedButton.name, out string sceneName))
-                {
+            if (clickedButton != null) {
+                if (_mainContentScenes.TryGetValue(clickedButton.name, out string sceneName)) {
                     // 로딩 화면 페이드 아웃과 프로그래스바 업데이트를 포함한 코루틴 실행
                     StartCoroutine(_sceneLoader.LoadSceneWithFade(sceneName));
                 }

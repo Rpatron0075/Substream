@@ -276,12 +276,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 243c29b788e266c4883580f402b44a29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CurrentGold: 999999999999998
   Savings: 500
   MembershipFee: 1000
   _blackMarketUID: {fileID: 155224124}
   _blackMarketUXML: {fileID: 9197481963319205126, guid: 040e64304515058408fd65bea76cf5cd, type: 3}
   _itemSlotUXML: {fileID: 9197481963319205126, guid: 957e5f27e8d228b4a8b603955d06a7c2, type: 3}
   _settingPanelUXML: {fileID: 9197481963319205126, guid: 5d7506b1cd7e2a54ea04dffa3740bfd0, type: 3}
+  _purchaseUXML: {fileID: 9197481963319205126, guid: c54728516bc07a94096004570e80bb24, type: 3}
+  _savingsUXML: {fileID: 9197481963319205126, guid: 0c441d75e5360204aab2037fa36cdc68, type: 3}
   savingsThresholds:
   - value: 0
     additiveSlots: 0
@@ -362,6 +365,11 @@ MonoBehaviour:
   _exitBtnName: Btn_Exit
   _refreshBtnName: Btn_Refresh
   _settingBtnName: Btn_Setting
+  _buyBtnName: Btn_Buy
+  _cancelBtnName: Btn_Cancel
+  _depositBtnName: Btn_Deposit
+  _withdrawBtnName: Btn_Withdraw
+  _closeSavingsBtnName: Btn_CloseSavings
 --- !u!114 &155224129
 MonoBehaviour:
   m_ObjectHideFlags: 0

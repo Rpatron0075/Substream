@@ -66,6 +66,8 @@ namespace UI.BlackMarket
         private List<CardData> _curCardPool = new List<CardData>();
         private List<OpartsData> _curOpartsPool = new List<OpartsData>();
 
+        private List<int> _excludeItemIDs = new List<int>();
+
         /// <summary>
         /// 이번 블랙마켓 씬에 등장할 수 있는 전체 아이템 풀 세팅
         /// </summary>
@@ -75,6 +77,9 @@ namespace UI.BlackMarket
             _curOpartsPool.Clear();
 
             foreach (var item in _masterItemDB) {
+                // 새로고침 시, 직전 아이템들은 제외됨
+                if (_excludeItemIDs != null && _excludeItemIDs.Contains(item.ID)) { continue; }
+
                 if (item is CardData card) {
                     // 파티 내 캐릭터의 ID와 일치하는 카드만 추가
                     if (partyCharacterIDs.Contains(card.OwnerCharacterID)) {
@@ -87,6 +92,14 @@ namespace UI.BlackMarket
                         _curOpartsPool.Add(oparts);
                     }
                 }
+            }
+        }
+
+        public void SetExcludeItemIDs(List<int> ids)
+        {
+            _excludeItemIDs.Clear();
+            if (ids != null) {
+                _excludeItemIDs.AddRange(ids);
             }
         }
 
@@ -138,18 +151,21 @@ namespace UI.BlackMarket
 
         private ItemData GetDummyItem(System.Type type, ItemRarity rarity)
         {
+            int ranPrice = Random.Range(100, 80000);
+
             if (type == typeof(CardData)) {
                 return new CardData { 
                     ID = 000, 
                     Name = "품절된 카드", 
                     Rarity = rarity, 
-                    Price = 0 };
+                    Price = ranPrice
+                };
             }
             return new OpartsData { 
                 ID = 000, 
                 Name = "품절된 오파츠", 
                 Rarity = rarity, 
-                Price = 0 
+                Price = ranPrice
             };
         }
     }
@@ -158,8 +174,25 @@ namespace UI.BlackMarket
     public class BlackMarketManager : MonoBehaviour
     {
         public static BlackMarketManager Instance;
+        
+        public enum RefreshState
+        {
+            /// <summary>
+            /// 저축 단계 미달
+            /// </summary>
+            Disabled,
+            /// <summary>
+            /// 활성화
+            /// </summary>
+            Active,
+            /// <summary>
+            /// 이미 사용함
+            /// </summary>
+            Locked, 
+        }
 
         [Header("Debug 변수")]
+        public long CurrentGold = 999999999999998;
         public int Savings = 500;
         public int MembershipFee = 1000;
 
@@ -168,6 +201,8 @@ namespace UI.BlackMarket
         [SerializeField] private VisualTreeAsset _blackMarketUXML;
         [SerializeField] private VisualTreeAsset _itemSlotUXML;
         [SerializeField] private VisualTreeAsset _settingPanelUXML;
+        [SerializeField] private VisualTreeAsset _purchaseUXML;
+        [SerializeField] private VisualTreeAsset _savingsUXML;
 
         [Header("Settings")]
         [SerializeField] [Tooltip("슬롯이 추가되는 저축액 기준")]
@@ -190,8 +225,19 @@ namespace UI.BlackMarket
         // -- 런타임 변수 --
         private int _additiveSlotCount = 0;
         private int _additiveRefreshingCount = 0;
-        private int _currentMembershipLevel = 0;
-        private RarityProbability _currentProbability;
+        private int _usedRefreshingCount = 0;
+        private int _curMembershipLevel = 0;
+        private RarityProbability _curProbability;
+        private RefreshState _curRefreshState;
+        private List<int> _prevItemIDs;
+        private VisualElement _purchaseRoot;
+        private int _selectedSlotIdx = -1;
+        private ItemData _selectedItemData = null;
+        private VisualElement _savingsRoot;
+        private Label _lblSavingsLevel;
+        private Label _lblTotalSavings;
+        private SliderInt _sldAmount;
+        private Label _lblSelectedAmount;
 
         /// <summary>
         /// 최종 슬롯 개수
@@ -202,13 +248,13 @@ namespace UI.BlackMarket
         /// </summary>
         public int TotalRefreshingCount => _additiveRefreshingCount;
 
-
         // -- UID 변수 --
         private VisualElement _blackMarketRoot;
         private Label _coinValue;
         private VisualElement _slotContainer;
         private List<VisualElement> _slotList =new List<VisualElement>();
         private VisualElement _settingRoot;
+        private Button _btnRefresh;
 
         // -- 아이템 --
         private ItemDatabase _itemDatabase;
@@ -227,15 +273,16 @@ namespace UI.BlackMarket
                 Destroy(this);
             }
 
-            _btnController = GetComponent<BlackMarketBtnController>();
+            _prevItemIDs = new List<int>();
 
             _itemDatabase = new ItemDatabase();
             _itemsData = new List<ItemData>();
 
+            _btnController = GetComponent<BlackMarketBtnController>();
             _blackMarketCWController = GetComponent<CharacterWidgetController>();
         }
 
-        #region EventFunc
+        // <----- 진입 및 퇴장 기능 ----->
         /// <summary>
         /// 블랙마켓 UI 열기
         /// </summary>
@@ -261,6 +308,7 @@ namespace UI.BlackMarket
             _blackMarketCWController.Initialize(_blackMarketRoot);
             _coinValue = _blackMarketRoot.Q<VisualElement>("Coin_Panel").Q<Label>("Value");
             _slotContainer = _blackMarketRoot.Q<VisualElement>("Item_Grid_Container");
+            _btnRefresh = _blackMarketRoot.Q<Button>("Btn_Refresh");
 
             // 데이터 초기화
             Initialize(Savings, MembershipFee);
@@ -285,6 +333,50 @@ namespace UI.BlackMarket
             }
         }
 
+        // <----- 초기화 ----->
+        /// <summary>
+        /// 블랙마켓 생성 절차
+        /// </summary>
+        /// <param name="currentSavings">현재 플레이어의 누적 저축액</param>
+        /// <param name="currentMembershipFee">현재 판에서 지불한 멤버십 비용</param>
+        private void Initialize(long curSavings, int curMembershipFee)
+        {
+            CalculateSavingsEffect(curSavings);
+            CalculateMembershipLevel(curMembershipFee);
+
+            Debug.Log(
+                $"[ BlackMarket ]\n" +
+                $"  저축액 : {curSavings}\n" +
+                $"      추가 슬롯 : {_additiveSlotCount}\n" +
+                $"      추가 새로고침 : {_additiveRefreshingCount}\n" +
+                $"  멤버십 Lv : {_curMembershipLevel}\n" +
+                $"      일반 : {rarityProbabilities[_curMembershipLevel].CommonWeight}\n" +
+                $"      희귀 : {rarityProbabilities[_curMembershipLevel].RareWeight}\n" +
+                $"      영웅 : {rarityProbabilities[_curMembershipLevel].UniqueWeight}\n" +
+                $"      전설 : {rarityProbabilities[_curMembershipLevel].LegendaryWeight}\n");
+
+            _slotList.Clear();
+            _slotContainer.Clear();
+
+            for (int i = 0; i < TotalSlotCount; i++) {
+                VisualElement slot = _itemSlotUXML.Instantiate();
+                slot.name = slot.name + $"({i})";
+                _slotList.Add(slot);
+                _slotContainer.Add(slot);
+            }
+        }
+
+        /// <summary>
+        /// 블랙마켓 노드를 클릭하면 해당 함수가 작동될 수 있도록 해야 함
+        /// </summary>
+        public void StartMarket()
+        {
+            _itemDatabase.SetExcludeItemIDs(null);
+            _usedRefreshingCount = 0;
+            GenerateMarketItems();
+        }
+
+        // <----- 세팅 기능 ----->
         public void OpenSettingPanel()
         {
             if (_settingPanelUXML == null) {
@@ -319,37 +411,8 @@ namespace UI.BlackMarket
             }
         }
 
-        #endregion
-
-        /// <summary>
-        /// 블랙마켓 생성 절차
-        /// </summary>
-        /// <param name="currentSavings">현재 플레이어의 누적 저축액</param>
-        /// <param name="currentMembershipFee">현재 판에서 지불한 멤버십 비용</param>
-        public void Initialize(long currentSavings, int currentMembershipFee)
-        {
-            CalculateSlotCount(currentSavings);
-            CalculateMembershipLevel(currentMembershipFee);
-
-            Debug.Log(
-                $"[BlackMarket]\n" +
-                $"  저축액: {currentSavings}\n" +
-                $"      추가 슬롯: {_additiveSlotCount}\n" +
-                $"      추가 새로고침: {_additiveRefreshingCount}\n" +
-                $"  멤버십 Lv: {_currentMembershipLevel}");
-
-            _slotList.Clear();
-            _slotContainer.Clear();
-
-            for (int i = 0; i < TotalSlotCount; i++) {
-                VisualElement slot = _itemSlotUXML.Instantiate();
-                slot.name = slot.name + $"({i})";
-                _slotList.Add(slot);
-                _slotContainer.Add(slot);
-            }
-        }
-
-        private void CalculateSlotCount(long savings)
+        // <----- 아이템 슬롯 기능 ----->
+        private void CalculateSavingsEffect(long savings)
         {
             _additiveSlotCount = 0;
             _additiveRefreshingCount = 0;
@@ -358,36 +421,34 @@ namespace UI.BlackMarket
             for (int i = 0; i < savingsThresholds.Count; i++) {
                 if (savings >= savingsThresholds[i].value) {
                     _additiveSlotCount = savingsThresholds[i].additiveSlots;
-                    _additiveRefreshingCount = savingsThresholds[i].additiveRefreshing;
+                    _additiveRefreshingCount = savingsThresholds[i].additiveRefreshing - _usedRefreshingCount;
                 }
                 else { break; }
             }
 
+            _curRefreshState = (_additiveRefreshingCount > 0) ? RefreshState.Active : RefreshState.Disabled;
         }
 
         private void CalculateMembershipLevel(int fee)
         {
-            _currentMembershipLevel = 0;
+            _curMembershipLevel = 0;
 
             // 멤버십 비용에 따라 레벨 결정
             for (int i = 0; i < membershipThresholds.Count; i++) {
                 if (fee >= membershipThresholds[i]) {
-                    _currentMembershipLevel = i;
+                    _curMembershipLevel = i;
                 }
                 else { break; }
             }
 
             // 정해진 멤버십 Level 을 넘지 않도록
-            _currentMembershipLevel = Mathf.Clamp(_currentMembershipLevel, 0, rarityProbabilities.Count - 1);
+            _curMembershipLevel = Mathf.Clamp(_curMembershipLevel, 0, rarityProbabilities.Count - 1);
 
             // 멤버십 Level에 따라 현재의 각 희귀도별 카드 및 오파츠 등장 확률이 다르게 설정되도록 함
-            _currentProbability = rarityProbabilities[_currentMembershipLevel];
+            _curProbability = rarityProbabilities[_curMembershipLevel];
         }
 
-        /// <summary>
-        /// 블랙마켓 노드를 클릭하면 해당 함수가 작동될 수 있도록 해야 함
-        /// </summary>
-        public void StartMarket()
+        private void GenerateMarketItems()
         {
             var ddoManager = DontDestroyOnLoadManager.Instance;
             if (ddoManager != null && ddoManager.ResourceManager != null) {
@@ -401,10 +462,26 @@ namespace UI.BlackMarket
                 // <---- 임시 더미 데이터 ---->
                 List<int> curPartyIDs = new List<int> { 1, 2, 3 };
                 List<int> ownedOpartsIDs = new List<int> { 101 };
-                _coinValue.text = "999,999,999,999,998";
+                _coinValue.text = CurrentGold.ToString("N0");
 
                 // 조건에 맞는 아이템 풀 사전 생성
                 _itemDatabase.CreateItemPool(curPartyIDs, ownedOpartsIDs);
+            }
+
+            // 저축으로 슬롯이 늘어났다면 UI 새롭게 추가
+            while (_slotList.Count < TotalSlotCount)
+            {
+                VisualElement slot = _itemSlotUXML.Instantiate();
+                slot.name = $"ItemSlot_{_slotList.Count}";
+                _slotList.Add(slot);
+                _slotContainer.Add(slot);
+            }
+            // 인출로 슬롯이 줄어들었다면 잉여 UI 제거
+            while (_slotList.Count > TotalSlotCount)
+            {
+                int lastIdx = _slotList.Count - 1;
+                _slotContainer.Remove(_slotList[lastIdx]);
+                _slotList.RemoveAt(lastIdx);
             }
 
             List<System.Type> curSlotTypes = GenerateSlotTypes(TotalSlotCount);
@@ -430,7 +507,7 @@ namespace UI.BlackMarket
         }
 
         /// <summary>
-        /// System.Type을 활용하여 슬롯 개수에 맞춰 카드 3장, 오파츠 2개를 보장하는 타입 리스트 생성
+        /// 카드 3장, 오파츠 2개를 보장함과 동시에 System.Type을 활용하여 요구한 슬롯 개수에 맞춰 랜덤하게 아이템 타입 리스트 생성
         /// </summary>
         private List<System.Type> GenerateSlotTypes(int totalSlotCount)
         {
@@ -458,12 +535,43 @@ namespace UI.BlackMarket
             return slotTypes;
         }
 
+        /// <summary>
+        /// 현재 멤버십 등급에 맞춰 랜덤한 희귀도를 반환하는 함수
+        /// </summary>
+        private ItemRarity GetRandomRarity()
+        {
+            int totalWeight = _curProbability.GetTotalWeight();
+            int randomValue = Random.Range(0, totalWeight);
+
+            // 가중치 랜덤
+            if (randomValue < _curProbability.CommonWeight)
+                return ItemRarity.Common;
+
+            randomValue -= _curProbability.CommonWeight;
+            if (randomValue < _curProbability.RareWeight)
+                return ItemRarity.Rare;
+
+            randomValue -= _curProbability.RareWeight;
+            if (randomValue < _curProbability.UniqueWeight)
+                return ItemRarity.Unique;
+
+            return ItemRarity.Legendary;
+        }
+
         private void BindSlotUI()
         {
             for (int i = 0; i < TotalSlotCount; i++) {
                 // 현재 인덱스의 슬롯 UI와 아이템 데이터 가져오기
                 VisualElement slot = _slotList[i];
                 ItemData itemData = _itemsData[i];
+
+                slot.UnregisterCallback<ClickEvent, int>(OnSlotClicked);
+
+                if (itemData == null) {
+                    LockSlotUI(slot); // 이미 팔린 자리면 잠금 처리
+                    continue;
+                }
+                slot.style.opacity = 1f;
 
                 Label nameLabel = slot.Q<Label>("Lbl_ItemName");
                 Label priceLabel = slot.Q<Label>("Lbl_ItemPrice");
@@ -487,32 +595,341 @@ namespace UI.BlackMarket
                     rarityBackground.style.borderRightColor = borderColor;
                     rarityBackground.style.borderTopColor = borderColor;
                 }
+
+                slot.RegisterCallback<ClickEvent, int>(OnSlotClicked, i);
             }
         }
 
         /// <summary>
-        /// 현재 멤버십 등급에 맞춰 랜덤한 희귀도를 반환하는 함수
+        /// 불특정 슬롯 클릭 시 호출
         /// </summary>
-        private ItemRarity GetRandomRarity()
+        private void OnSlotClicked(ClickEvent evt, int slotIdx)
         {
-            int totalWeight = _currentProbability.GetTotalWeight();
-            int randomValue = Random.Range(0, totalWeight);
+            if (_itemsData[slotIdx] == null) return; // 빈 데이터면 무시
 
-            // 가중치 랜덤
-            if (randomValue < _currentProbability.CommonWeight)
-                return ItemRarity.Common;
+            _selectedSlotIdx = slotIdx;
+            _selectedItemData = _itemsData[slotIdx];
 
-            randomValue -= _currentProbability.CommonWeight;
-            if (randomValue < _currentProbability.RareWeight)
-                return ItemRarity.Rare;
-
-            randomValue -= _currentProbability.RareWeight;
-            if (randomValue < _currentProbability.UniqueWeight)
-                return ItemRarity.Unique;
-
-            return ItemRarity.Legendary;
+            OpenPurchasePopup(_selectedItemData);
         }
-        
+
+        // <----- 새로고침 기능 ----->
+        /// <summary>
+        /// 새로고침 로직
+        /// </summary>
+        public void HandleRefreshRequest()
+        {
+            switch (_curRefreshState) {
+                case RefreshState.Disabled:
+                    Debug.Log("대화창 : 아직 저축 금액이 부족하신데요? 저와의 신뢰 관계를 더 쌓으셔야겠어요.");
+                    break;
+
+                case RefreshState.Locked:
+                    Debug.Log("대화창 : 사용 가능한 새로고침 횟수를 전부 소진하셨어요.");
+                    break;
+
+                case RefreshState.Active:
+                    _additiveRefreshingCount--;
+                    _usedRefreshingCount++;
+                    if (_additiveRefreshingCount <= 0) {
+                        _curRefreshState = RefreshState.Locked;
+                    }
+
+                    UpdateRefreshButtonUI();
+
+                    _prevItemIDs.Clear();
+                    foreach (var item in _itemsData) {
+                        if (item== null) continue;
+                        _prevItemIDs.Add(item.ID);
+                    }
+                    _itemDatabase.SetExcludeItemIDs(_prevItemIDs);
+
+                    GenerateMarketItems();
+
+                    Debug.Log("대화창 : 새로운 상품이 준비되었습니다!");
+                    break;
+            }
+        }
+
+        private void UpdateRefreshButtonUI()
+        {
+            if (_btnRefresh == null) return;
+
+            _btnRefresh.text = $"새로고침 x {_additiveRefreshingCount}";
+
+            if (_curRefreshState == RefreshState.Active) {
+                _btnRefresh.style.opacity = 1f;
+            }
+            else {
+                _btnRefresh.style.opacity = 0.5f;
+            }
+        }
+
+        // <----- 구매 기능 ----->
+        /// <summary>
+        /// 구매 팝업을 생성하고 데이터를 삽입
+        /// </summary>
+        private void OpenPurchasePopup(ItemData item)
+        {
+            if (_purchaseUXML == null) {
+                Debug.LogError("구매 팝업 UXML이 할당되지 않았습니다");
+                return;
+            }
+
+            if (_purchaseRoot != null) return;
+
+            _purchaseRoot = _purchaseUXML.Instantiate();
+            _purchaseRoot.style.position = Position.Absolute;
+            _purchaseRoot.style.top = 0;
+            _purchaseRoot.style.bottom = 0;
+            _purchaseRoot.style.left = 0;
+            _purchaseRoot.style.right = 0;
+
+            _blackMarketRoot.Add(_purchaseRoot);
+
+            // 정보만 갈아끼우기
+            Label popupName = _purchaseRoot.Q<Label>("Lbl_PopupName");
+            Label popupPrice = _purchaseRoot.Q<Label>("Lbl_PopupPrice");
+            VisualElement popupIcon = _purchaseRoot.Q<VisualElement>("Img_PopupIcon");
+            VisualElement popupBackground = _purchaseRoot.Q<VisualElement>("Img_PopupIcon");
+
+            if (popupName != null) popupName.text = item.Name;
+            if (popupPrice != null) popupPrice.text = item.Price.ToString("N0");
+            if (popupIcon != null && item.Image != null) {
+                popupIcon.style.backgroundImage = new StyleBackground(item.Image);
+            }
+            popupBackground.style.borderBottomColor = GetRarityColor(item.Rarity);
+            popupBackground.style.borderLeftColor = GetRarityColor(item.Rarity);
+            popupBackground.style.borderRightColor = GetRarityColor(item.Rarity);
+            popupBackground.style.borderTopColor = GetRarityColor(item.Rarity);
+
+            if (_btnController != null) {
+                _btnController.ConnectPopupBtnEvt(_purchaseRoot);
+            }
+        }
+
+        /// <summary>
+        /// BtnController에서 취소 클릭 시
+        /// </summary>
+        public void ClosePurchasePopup()
+        {
+            if (_purchaseRoot != null) {
+                _purchaseRoot.RemoveFromHierarchy();
+                _purchaseRoot = null;
+            }
+            _selectedSlotIdx = -1;
+            _selectedItemData = null;
+        }
+
+        /// <summary>
+        /// BtnController에서 구매 클릭 시
+        /// </summary>
+        public void ConfirmPurchase()
+        {
+            if (_selectedItemData == null) return;
+
+            var ddoManager = DontDestroyOnLoadManager.Instance;
+            if (ddoManager == null || ddoManager.ResourceManager == null) return;
+
+            int curUserID = ddoManager.ResourceManager.SelectUserID;
+           // var curUserData = ddoManager.LocalUser(curUserID);
+
+            if (CurrentGold >= _selectedItemData.Price) {
+                CurrentGold -= _selectedItemData.Price;
+                // curUserData.Gold = currentGold;
+                _coinValue.text = CurrentGold.ToString("N0");
+
+                if (_selectedItemData is CardData card) {
+                    Debug.Log($"카드 획득 처리: {card.Name}");
+                    // curUserData.AddCard(card.ID);
+                }
+                else if (_selectedItemData is OpartsData oparts) {
+                    Debug.Log($"오파츠 획득 처리: {oparts.Name}");
+                    // curUserData.AddOparts(oparts.ID);
+                }
+
+                // 상품 슬롯 잠금 상태로 변경
+                _itemsData[_selectedSlotIdx] = null;
+                LockSlotUI(_slotList[_selectedSlotIdx]);
+
+                Debug.Log("대화창 : 성공적으로 거래가 성사되었습니다.");
+                ClosePurchasePopup();
+            }
+            else {
+                Debug.Log("대화창 : 재화가 부족합니다.");
+            }
+        }
+
+        private void LockSlotUI(VisualElement slot)
+        {
+            slot.style.opacity = 0.3f;
+            slot.UnregisterCallback<ClickEvent, int>(OnSlotClicked);
+        }
+
+        // <----- 저축 기능 ----->
+        /// <summary>
+        /// NPC 클릭 시 저축 팝업 열기
+        /// </summary>
+        public void OpenSavingsPopup()
+        {
+            if (_savingsUXML == null) return;
+            if (_savingsRoot != null) return;
+
+            _savingsRoot = _savingsUXML.Instantiate();
+            _savingsRoot.style.position = Position.Absolute;
+            _savingsRoot.style.top = 0;
+            _savingsRoot.style.bottom = 0;
+            _savingsRoot.style.left = 0;
+            _savingsRoot.style.right = 0;
+
+            _blackMarketRoot.Add(_savingsRoot);
+
+            _lblSavingsLevel = _savingsRoot.Q<Label>("Lbl_SavingsLevel");
+            _lblTotalSavings = _savingsRoot.Q<Label>("Lbl_TotalSavings");
+            _sldAmount = _savingsRoot.Q<SliderInt>("Sld_Amount");
+            _lblSelectedAmount = _savingsRoot.Q<Label>("Lbl_SelectedAmount");
+
+            if (_sldAmount != null && _lblSelectedAmount != null) {
+                _sldAmount.RegisterValueChangedCallback(evt => { 
+                    int snappedValue = Mathf.RoundToInt(evt.newValue / 100f) * 100; // 100 단위로 반올림
+
+                    if (snappedValue != evt.newValue) {
+                        _sldAmount.SetValueWithoutNotify(snappedValue);
+                    }
+                    _lblSelectedAmount.text = $"{snappedValue:N0} G";
+                });
+            }
+
+            UpdateSavingsPopupUI();
+
+            if (_btnController != null) {
+                _btnController.ConnectSavingsBtnEvt(_savingsRoot);
+            }
+        }
+
+        public void CloseSavingsPopup()
+        {
+            if (_savingsRoot != null) {
+                _savingsRoot.RemoveFromHierarchy();
+                _savingsRoot = null;
+            }
+            _sldAmount = null;
+            _lblSelectedAmount = null;
+        }
+
+        /// <summary>
+        ///슬라이더 값을 참조하여 입금 처리
+        /// </summary>
+        public void RequestDeposit()
+        {
+            if (_sldAmount == null) return;
+            int amount = _sldAmount.value;
+
+            if (CurrentGold >= amount) {
+                CurrentGold -= amount;
+                Savings += amount;
+
+                RefreshSavingsState();
+                Debug.Log($"대화창 : {amount}G 입금 완료!");
+            }
+            else {
+                Debug.Log("대화창 : 소지하신 재화가 부족합니다.");
+            }
+        }
+
+        /// <summary>
+        /// 슬라이더 값을 참조하여 인출 처리
+        /// </summary>
+        public void RequestWithdraw()
+        {
+            if (_sldAmount == null) return;
+            int amount = _sldAmount.value;
+
+            if (Savings >= amount) {
+                long expectedSavings = Savings - amount;
+                int expectedAdditiveSlots = 0;
+                int expectedTotalRefreshing = 0;
+
+                for (int i = 0; i < savingsThresholds.Count; i++) {
+                    if (expectedSavings >= savingsThresholds[i].value) {
+                        expectedAdditiveSlots = savingsThresholds[i].additiveSlots;
+                        expectedTotalRefreshing = savingsThresholds[i].additiveRefreshing;
+                    }
+                    else break;
+                }
+
+                int expectedTotalSlots = _baseSlotCount + expectedAdditiveSlots;
+                int purchasedCount = 0;
+                foreach (var item in _itemsData) {
+                    if (item == null) purchasedCount++;
+                }
+
+                bool isRefreshingValid = expectedTotalRefreshing >= _usedRefreshingCount;
+                bool isSlotValid = !(expectedTotalSlots < TotalSlotCount && purchasedCount > 0);
+
+                // 인출로 인해 새로고침 개수가 줄어들 예정인데, 사용해버려서 교환 불가하다면 허용하지 않음
+                // 인출로 인해 슬롯 개수가 줄어들 예정인데, 이미 하나라도 샀다면 허용하지 않음
+                if (isRefreshingValid && isSlotValid) {
+                    Savings -= amount;
+                    CurrentGold += amount;
+
+                    // 인출 후 슬롯 감소 즉시 반영
+                    while (_slotList.Count > expectedTotalSlots) {
+                        int lastIdx = _slotList.Count - 1;
+                        if (_itemsData.Count > lastIdx) {
+                            _itemsData.RemoveAt(lastIdx);
+                        }
+                        _slotContainer.Remove(_slotList[lastIdx]);
+                        _slotList.RemoveAt(lastIdx);
+                    }
+
+                    RefreshSavingsState();
+                    Debug.Log($"대화창 : {amount}G 인출 완료!");
+                }
+                else {
+                    Debug.Log($"대화창 : 고객님, 이미 블랙마켓 뱅크에서 제공된 혜택을 사용하셔서 해당 금액은 인출이 불가합니다.");
+                }
+            }
+            else {
+                Debug.Log("대화창 : 인출할 저축액이 부족합니다.");
+            }
+        }
+
+        /// <summary>
+        /// 입출금 발생 시 데이터 및 UI 갱신
+        /// </summary>
+        private void RefreshSavingsState()
+        {
+            // 골드 UI 갱신
+            if (_coinValue != null) {
+                _coinValue.text = CurrentGold.ToString("N0");
+            }
+
+            // 내부 데이터 재계산
+            CalculateSavingsEffect(Savings);
+
+            // UI 갱신
+            UpdateSavingsPopupUI();
+            UpdateRefreshButtonUI();
+        }
+
+        private void UpdateSavingsPopupUI()
+        {
+            if (_savingsRoot == null) return;
+
+            // 현재 누적 단계 계산 (CalculateSavingsEffect에서 세팅된 값 기반)
+            int currentLevel = 0;
+            for (int i = 0; i < savingsThresholds.Count; i++) {
+                if (Savings >= savingsThresholds[i].value) {
+                    currentLevel = i + 1;
+                }
+                else break;
+            }
+
+            if (_lblSavingsLevel != null) _lblSavingsLevel.text = $"Lv. {currentLevel}";
+            if (_lblTotalSavings != null) _lblTotalSavings.text = $"{Savings.ToString("N0")} G";
+        }
+
         private Color GetRarityColor(ItemRarity rarity)
         {
             switch (rarity) {
@@ -526,5 +943,4 @@ namespace UI.BlackMarket
             }
         }
     }
-
 }
