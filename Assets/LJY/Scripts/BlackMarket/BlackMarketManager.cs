@@ -452,6 +452,8 @@ namespace UI.BlackMarket
                 _slotList.Add(slot);
                 _slotContainer.Add(slot);
             }
+
+            UpdateRefreshButtonUI();
         }
 
         /// <summary>
