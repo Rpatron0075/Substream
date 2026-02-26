@@ -13,7 +13,7 @@ public class LocalUserData
 public class LocalUserDataBase : DataScriptableObjects
 {
     [Serialize]
-    //key ´Â int Çü, LocalUserDataÀÇ ID
+    //key ëŠ” int í˜•, LocalUserDataì˜ ID
     public Dictionary<int, LocalUserData> LocalUser = new Dictionary<int, LocalUserData>();
 
 
@@ -49,6 +49,12 @@ public class LocalUserDataBase : DataScriptableObjects
             data.BattleReward = LocalUserDataDic[data.ID].BattleReward;
             */
         }
+    }
+
+    public override void ClearContainer()
+    {
+        LocalUserList.Clear();
+        LocalUser.Clear();
     }
 }
 

@@ -1,141 +1,127 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
-using Unity.VisualScripting;
 
 public class CardManager : BaseManager
 {
-    private List<Card> m_hand;
-    private List<List<Card>> m_deck;
-    private List<List<Card>> m_graveyard;
-    private int m_turnCounter;
+    struct UnitCardPair
+    {
+        public Unit s_unit;
+        public List<Card> s_card;
+    };
+
+    private UnitCardPair m_hand;
+    private Dictionary<Unit,List<Card>> m_deck;
+    private Dictionary<Unit,List<Card>> m_graveyard;
+
     public List<Card> Hand
     {
-        get { return m_hand; }
+        get { return m_hand.s_card; }
     }
     public List<Card> Deck
     {
-        get { return m_deck[m_turnCounter]; }
+        get { return m_deck[m_hand.s_unit]; }
     }
     public List<Card> Graveyard
     {
-        get { return m_graveyard[m_turnCounter]; }
+        get { return m_graveyard[m_hand.s_unit]; }
     }
     public override void Initialize(MasterManager masterManager, TurnManager turnManager)
     {
         m_masterManager = masterManager;
-        m_turnCounter = 1;
     }
 
     public override void DataInitialize(TurnManager turnManager, CharacterManager characterManager, MonsterManager monsterManager)
     {
-        m_hand = new List<Card>();
+        /***************test Code about Struct**************/
+        m_hand = new UnitCardPair();
+        m_hand.s_card = new List<Card>();
 
-        m_deck = new List<List<Card>>(characterManager.Character.Count);
-        m_graveyard = new List<List<Card>>(characterManager.Character.Count);
+        m_deck = new Dictionary<Unit,List<Card>>();
+        m_graveyard = new Dictionary<Unit,List<Card>>();
 
-        for (int a = 0; a < characterManager.Character.Count; a++)
+        foreach (var character in characterManager.Character)
         {
-            List<Card> Deck = new List<Card>();
-            foreach(var c in DontDestroyOnLoadManager.Instance.UseCard.UseCard)
+            UnitCardPair pair = new UnitCardPair();
+            pair.s_unit = character;
+            pair.s_card = new List<Card>();
+            if (character is CharacterTableData CTD)
             {
-                if (turnManager.CurrentTurnUnit is CharacterData character)
+                foreach (var uc in DataBase.UseCardDataBase.UseCard)
                 {
-                    if (character.PrototypeUnitID == c.Value.PrototypeUnitID)
+                    if(CTD.ID == uc.Value.PrototypeUnitID)
                     {
                         Card newCard = new Card();
-                        newCard.Initialize(DontDestroyOnLoadManager.Instance.Card.Card[c.Value.CardID]);
-                        Deck.Add(newCard);
+                        newCard.Initialize(pair.s_unit, DataBase.CardTable(uc.Value.CardID), m_masterManager.SkillScheduleManager);
+                        pair.s_card.Add(newCard);
                     }
                 }
             }
-            m_deck.Add(Deck);
-            List<Card> graveyard = new List<Card>();
-            m_graveyard.Add(graveyard);
+            m_deck.Add(pair.s_unit,pair.s_card);
+            m_graveyard.Add(pair.s_unit,new List<Card>());
         }
-        HandShake(turnManager, characterManager);
+        HandShaker(turnManager,characterManager);
+    }
+
+    public void HandShaker(TurnManager turnManager, CharacterManager characterManager)
+    {
+        foreach(var g in m_hand.s_card)
+        {
+            m_graveyard[m_hand.s_unit].Add(g);
+        }
+        m_hand.s_card.Clear();
+
+        if (turnManager.CurrentTurnUnit is not CharacterTableData c)
+        {
+            return;
+        }
+
+        m_hand.s_unit = turnManager.CurrentTurnUnit;
+        Unit key = m_hand.s_unit;
+
+        if (m_deck[key].Count < 6)
+        {
+            foreach (var d in m_deck[key])
+            {
+                m_hand.s_card.Add(d);
+            }
+            m_deck[key].Clear();
+            foreach (var g in m_graveyard[key])
+            {
+                m_deck[key].Add(g);
+            }
+            m_graveyard[key].Clear();
+        }
+        else
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                int address = Random.Range(0, m_deck[key].Count);
+                m_hand.s_card.Add(m_deck[key][address]);
+                m_deck[key].RemoveAt(address);
+            }
+        }
+
+        if (m_deck[key].Count < 1)
+        {
+            foreach (var g in m_graveyard[key])
+            {
+                m_deck[key].Add(g);
+            }
+            m_graveyard[key].Clear();
+        }
     }
 
     public override void SetTurn(TurnManager turnManager, CharacterManager characterManager, MonsterManager monsterManager, CardManager cardManager)
     {
-        HandShake(turnManager, characterManager);
+        HandShaker(turnManager, characterManager);
     }
 
-    private void HandShake(TurnManager turnManager, CharacterManager characterManager)
+    public void CharacterDying(Unit unit)
     {
-        // 기존 핸드 패 삭제
-        foreach(var h in m_hand)
-        {
-            m_graveyard[(m_turnCounter % characterManager.Character.Count)].Add(h);
-        }
-        m_hand.Clear();
+        m_deck[unit].Clear();
+        m_graveyard[unit].Clear();
 
-        int position = 0;
-        if (!(turnManager.CurrentTurnUnit is CharacterData)) {
-            Debug.Log("몬스터 턴");
-            return;
-        }
-        else
-        {
-            if (turnManager.CurrentTurnUnit is CharacterData currentTurnCharacter)
-            {
-                var key = (currentTurnCharacter.UserID, currentTurnCharacter.PrototypeUnitID, currentTurnCharacter.InstanceID);
-                Debug.Log(key);
-                int i = 0;
-                foreach (var character in characterManager.Character)
-                {
-                    var characterkey = (character.UserID, character.PrototypeUnitID, character.InstanceID);
-                    if (key.Equals(characterkey))
-                    {
-                        position = i;
-                        break;
-                    }
-                    i++;    
-                }
-            }
-        }
-
-        // 핸드 패 새로 생성
-        if (m_deck[position].Count < 5 && m_deck[position].Count >0)
-        {
-            foreach(var d in m_deck[position])
-            {
-                m_hand.Add(d);
-            }
-            m_deck[position].Clear();
-            foreach (var g in m_graveyard[position])
-            {
-                m_deck[position].Add(g);
-            }
-            m_graveyard[position].Clear();
-        }
-        else
-        {
-            for(int i=0;i<5;i++)
-            {
-                int address = Random.Range(0, m_deck[position].Count);
-                m_hand.Add(m_deck[position][address]);
-                m_deck[position].RemoveAt(address);
-            }
-        }
-
-        // 패 배분이 끝나고 덱이 비어있으면 다시 채움
-        if(m_deck[position].Count < 1)
-        {
-            foreach(var g in m_graveyard[position])
-            {
-                m_deck[position].Add(g);
-            }
-            m_graveyard[position].Clear();
-        }
-        m_turnCounter = position;
-    }
-
-    public void CharacterDying(int poisition)
-    {
-        m_deck.RemoveAt(poisition);
-        m_graveyard.RemoveAt(poisition);
+        m_deck.Remove(unit);
+        m_graveyard.Remove(unit);
     }
 }

@@ -1,0 +1,33 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="Modal_Background" picking-mode="Position" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center; position: absolute; left: 0; top: 0; right: 0; bottom: 0; flex-shrink: 0;">
+        <ui:VisualElement name="Setting_Panel" style="width: 450px; height: auto; min-height: 480px; background-color: rgb(45, 45, 45); border-radius: 12px; padding: 24px; border-width: 2px; border-color: rgb(100, 100, 100);">
+            
+            <ui:Label text="사운드 설정" style="font-size: 24px; color: white; -unity-font-style: bold; align-self: center; margin-bottom: 30px;" />
+            
+            <ui:VisualElement style="margin-bottom: 20px;">
+                <ui:Toggle name="Tgl_Master" label="전체 소리 (Master)" value="true" style="color: white; font-size: 16px; margin-bottom: 5px;" />
+                <ui:Slider name="Sld_Master" low-value="0" high-value="1" value="1" style="margin-left: 5px; margin-right: 5px;" />
+            </ui:VisualElement>
+
+            <ui:VisualElement style="margin-bottom: 20px;">
+                <ui:Toggle name="Tgl_BGM" label="배경음악 (BGM)" value="true" style="color: white; font-size: 16px; margin-bottom: 5px;" />
+                <ui:Slider name="Sld_BGM" low-value="0" high-value="1" value="1" style="margin-left: 5px; margin-right: 5px;" />
+            </ui:VisualElement>
+
+            <ui:VisualElement style="margin-bottom: 20px;">
+                <ui:Toggle name="Tgl_SFX" label="효과음 (SFX)" value="true" style="color: white; font-size: 16px; margin-bottom: 5px;" />
+                <ui:Slider name="Sld_SFX" low-value="0" high-value="1" value="1" style="margin-left: 5px; margin-right: 5px;" />
+            </ui:VisualElement>
+
+            <ui:VisualElement style="margin-bottom: 30px;">
+                <ui:Toggle name="Tgl_VO" label="캐릭터 음성 (VO)" value="true" style="color: white; font-size: 16px; margin-bottom: 5px;" />
+                <ui:Slider name="Sld_VO" low-value="0" high-value="1" value="1" style="margin-left: 5px; margin-right: 5px;" />
+            </ui:VisualElement>
+            
+            <ui:VisualElement style="flex-grow: 1;" />
+            
+            <ui:Button name="Btn_CloseSetting" text="닫 기" style="height: 45px; font-size: 18px; background-color: rgb(200, 60, 60); color: white; border-radius: 8px; -unity-font-style: bold;" />
+            
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

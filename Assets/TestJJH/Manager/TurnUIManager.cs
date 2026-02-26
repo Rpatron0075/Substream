@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Text;
+using Unity.Mathematics;
 
 public class TurnUIManager : BaseManager, IsynchronizeUI
 {
@@ -36,13 +37,11 @@ public class TurnUIManager : BaseManager, IsynchronizeUI
 
     public override void DataInitialize(TurnManager turnManager, CharacterManager characterManager, MonsterManager monsterManager)
     {
-        /*
-        여기는 데이터 베이스와 연동하여 초상화 이미지 초기화가 들어가야함
-        */
         m_unitPortraitPair.Clear();
         int i = 0;
         foreach (var character in characterManager.Character)
         {
+            OrderByTurnSpeedImage[i].transform.GetChild(0).GetComponent<Image>().sprite = ResourcesManager.Character_Portrait(character.ID);
             UnitPortraitPair pair = new UnitPortraitPair();
             pair.s_portrait = OrderByTurnSpeedImage[i];
             pair.s_unit = character;
@@ -57,6 +56,7 @@ public class TurnUIManager : BaseManager, IsynchronizeUI
             m_unitPortraitPair.Add(pair);
             i++;
         }
+        SetPortrait(turnManager);
     }
 
     public void Synchronization(BaseManager baseManager)
@@ -65,41 +65,15 @@ public class TurnUIManager : BaseManager, IsynchronizeUI
 
         if (baseManager is TurnManager turnManager)
         {
-            for (int i = turnManager.Units.Count + 1; i < OrderByTurnSpeedImage.Count; i++)
-            {
-                OrderByTurnSpeedImage[i].gameObject.SetActive(false);
-            }
-            int j = 0;
-            foreach(var unitPortraitPair in m_unitPortraitPair)
-            {
-                if(turnManager.CurrentTurnUnit.Equals(unitPortraitPair.s_unit))
-                {
-                    Debug.Log(unitPortraitPair.s_portrait.transform.parent.name);
-                    unitPortraitPair.s_portrait.transform.SetAsFirstSibling();
-                    j++;
-                    Debug.Log("Front Unit :" + unitPortraitPair.s_portrait.name);
-                    break;
-                }
-            }
-            foreach (var unitdata in turnManager.Units)
-            {
-                foreach (var unitPortraitPair in m_unitPortraitPair)
-                {
-                    if (unitdata.Equals(unitPortraitPair.s_unit))
-                    {
-                        unitPortraitPair.s_portrait.transform.SetSiblingIndex(j);
-                        j++;
-                        Debug.Log(j + ":" + unitPortraitPair.s_portrait.name);
-                    }
-                }
-            }
             SetTurnEtherInfo(turnManager);
+            SetPortrait(turnManager);
         }
     }
 
     public override void SetTurn(TurnManager turnManager, CharacterManager characterManager, MonsterManager monsterManager, CardManager cardManager)
-    { 
-        
+    {
+        SetTurnEtherInfo(turnManager);
+        SetPortrait(turnManager);
     }
 
     public void SetTurnEtherInfo(TurnManager turnManager)
@@ -113,5 +87,35 @@ public class TurnUIManager : BaseManager, IsynchronizeUI
             .Append(" / 15");
 
         m_turnText.text = m_stringBuilder.ToString();
+    }
+
+
+    public void SetPortrait(TurnManager turnManager)
+    {
+        for (int i = turnManager.Units.Count + 1; i < OrderByTurnSpeedImage.Count; i++)
+        {
+            OrderByTurnSpeedImage[i].gameObject.SetActive(false);
+        }
+        int j = 0;
+        foreach (var unitPortraitPair in m_unitPortraitPair)
+        {
+            if (turnManager.CurrentTurnUnit.Equals(unitPortraitPair.s_unit))
+            {
+                unitPortraitPair.s_portrait.transform.SetAsFirstSibling();
+                j++;
+                break;
+            }
+        }
+        foreach (var unitdata in turnManager.Units)
+        {
+            foreach (var unitPortraitPair in m_unitPortraitPair)
+            {
+                if (unitdata.Equals(unitPortraitPair.s_unit))
+                {
+                    unitPortraitPair.s_portrait.transform.SetSiblingIndex(j);
+                    j++;
+                }
+            }
+        }
     }
 }

@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class CharacterManager : BaseManager
 {
-    private LinkedList<CharacterData> m_character;
+    private LinkedList<CharacterTableData> m_character;
 
     private int m_partyNumber;
 
-    public LinkedList<CharacterData> Character
+    public LinkedList<CharacterTableData> Character
     {
         get { return m_character; }
     }
@@ -17,27 +17,22 @@ public class CharacterManager : BaseManager
     {
         m_masterManager = masterManager;
 
-        m_character = new LinkedList<CharacterData>();
+        m_character = new LinkedList<CharacterTableData>();
     }
 
     /// <summary>
-    /// 1. DontDestroyOnLoadManagerÀÇ Party Á¤º¸¸¦ °¡Á®¿È
-    /// 2. party¿¡ ¼ÓÇÑ key °ª {UserID, PrototypeCharacterID, InstanceID}¸¦ ¸ğµÎ °¡Á®¿È
-    /// 3. °¡Á®¿Â key °ªÀ¸·Î DontDestroyOnLoadManager¿¡¼­ Ã£¾Æ³½ ´ÙÀ½ m_character·Î ¸ğµÎ enqueue
-    /// 4. ¼Óµµ¿¡ °üÇÑ ±âÈ¹ÀÌ Ãß°¡µÇ¾ú´Ù¸é ¼Óµµ °ª¿¡ ¸Â°Ô Á¤·Ä ÈÄ enqueue
+    /// 1. DontDestroyOnLoadManagerì˜ Party ì •ë³´ë¥¼ ê°€ì ¸ì˜´
+    /// 2. partyì— ì†í•œ key ê°’ {UserID, PrototypeCharacterID, InstanceID}ë¥¼ ëª¨ë‘ ê°€ì ¸ì˜´
+    /// 3. ê°€ì ¸ì˜¨ key ê°’ìœ¼ë¡œ DontDestroyOnLoadManagerì—ì„œ ì°¾ì•„ë‚¸ ë‹¤ìŒ m_characterë¡œ ëª¨ë‘ enqueue
+    /// 4. ì†ë„ì— ê´€í•œ ê¸°íšì´ ì¶”ê°€ë˜ì—ˆë‹¤ë©´ ì†ë„ ê°’ì— ë§ê²Œ ì •ë ¬ í›„ enqueue
     /// </summary>
     public override void DataInitialize(TurnManager turnManager, CharacterManager charcterManager, MonsterManager monsterManager)
     {
         m_partyNumber = 4;
-        // ÀÓ½Ã ÆÄÆ¼ µ¥ÀÌÅÍ : 0,0,0,0 4¸í
-        var key = (0, 0, 0);
-        m_character.AddLast(DontDestroyOnLoadManager.Instance.Character.Character[key]);
-        key = (0, 0, 1);
-        m_character.AddLast(DontDestroyOnLoadManager.Instance.Character.Character[key]);
-        key = (0, 0, 2);
-        m_character.AddLast(DontDestroyOnLoadManager.Instance.Character.Character[key]);
-        key = (0, 0, 3);
-        m_character.AddLast(DontDestroyOnLoadManager.Instance.Character.Character[key]);
+        m_character.AddLast(DataBase.Character(1));
+        m_character.AddLast(DataBase.Character(2));
+        m_character.AddLast(DataBase.Character(3));
+        m_character.AddLast(DataBase.Character(4));
     }
 
     public override void SetTurn(TurnManager turnManager, CharacterManager characterManager, MonsterManager monsterManager, CardManager cardManager)
@@ -47,8 +42,8 @@ public class CharacterManager : BaseManager
 
     public void SetHealthPoint(int position, float damage)
     {
-        Debug.Log($"Character[{position}] °¡ {damage}ÀÇ µ¥¹ÌÁö¸¦ ÀÔÀ½");
-        //½ÇÁ¦ ´ë¹ÌÁö Àû¿ë
+        Debug.Log($"Character[{position}] åª›Â€ {damage}???ê³•?ï§Â€ç‘œ??ë‚†ì“¬");
+        //ì‹¤ì œ ëŒ€ë¯¸ì§€ ì ìš©
         /*m_character[position].HealthPoint -= damage;
         if (m_character[position].HealthPoint < 0)
         {

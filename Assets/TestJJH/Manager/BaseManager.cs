@@ -2,19 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class BaseManager : MonoBehaviour
+public abstract class BaseManager : AccessableDataBase
 {
     protected MasterManager m_masterManager;
-    
-    // ÃÖÃÊ ÃÊ±âÈ­½Ã È£Ãâ
+
     public abstract void Initialize(MasterManager masterManager, TurnManager turnManager);
 
-    // µ¥ÀÌÅÍ ÃÊ±âÈ­½Ã È£Ãâ
+    // ë°ì´í„° ì´ˆê¸°í™”ì‹œ í˜¸ì¶œ
     public virtual void DataInitialize(TurnManager turnManager, CharacterManager characterManager , MonsterManager monsterManager)
     {
     }
 
-    // ÅÏ Á¾·á½Ã È£Ãâ
+    // í„´ ì¢…ë£Œì‹œ í˜¸ì¶œ
     public virtual void SetTurn(TurnManager turnManager, CharacterManager characterManager, MonsterManager monsterManager, CardManager cardManager)
     {
     }

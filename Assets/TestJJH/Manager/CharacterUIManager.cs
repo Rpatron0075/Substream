@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,15 +14,15 @@ public class CharacterUIManager : BaseManager, IsynchronizeUI
         m_masterManager = masterManager;
         s_AttackPosition = 50;
     }
-    /// <summary>
-    /// 
-    /// </summary>
+
     public override void DataInitialize(TurnManager turnManager, CharacterManager characterManager, MonsterManager monsterManager)
     {
-        for (int i = 0; i < characterManager.Character.Count; i++)
+        int c = 0;
+        foreach(var character in characterManager.Character)
         {
-            m_characterHealthPoint[i].maxValue = i+1;
-            m_characterHealthPoint[i].value = m_characterHealthPoint[i].maxValue;
+            m_characterHealthPoint[c].maxValue = character.HP;
+            m_characterHealthPoint[c].value = m_characterHealthPoint[c].maxValue;
+            c++;
         }
         for (int i = characterManager.Character.Count; i < 4; i++)
         {
@@ -37,7 +37,7 @@ public class CharacterUIManager : BaseManager, IsynchronizeUI
             int a = 0;
             foreach (var character in characterManager.Character)
             {
-                m_characterHealthPoint[a].value -= character.UserID;
+                m_characterHealthPoint[a].value -= character.ID;
                 a++;
             }
         }

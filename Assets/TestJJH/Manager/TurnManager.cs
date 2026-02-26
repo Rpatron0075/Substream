@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class TurnManager : BaseManager
@@ -39,11 +40,9 @@ public class TurnManager : BaseManager
         m_units = new LinkedList<Unit>();
     }
 
-
-    /// <summary>
-    /// À¯´ÖÀÇ ¼Óµµ ¿ë¾î Á¤¸®
-    /// Speed´Â ±âº» ¼Óµµ
-    /// UnitSpeed´Â ÀÎÇÃ·¹ÀÌ ¼Óµµ(Áï, °¡º¯ °¡´ÉÇÑ º¯¼ö)
+    /// ìœ ë‹›ì˜ ì†ë„ ìš©ì–´ ì •ë¦¬
+    /// SpeedëŠ” ê¸°ë³¸ ì†ë„
+    /// UnitSpeedëŠ” ì¸í”Œë ˆì´ ì†ë„(ì¦‰, ê°€ë³€ ê°€ëŠ¥í•œ ë³€ìˆ˜)
     /// </summary>
     /// <param name="turnManager"></param>
     /// <param name="characterManager"></param>
@@ -64,7 +63,7 @@ public class TurnManager : BaseManager
         foreach (var unit in m_units)
         {
             int speed;
-            if(unit is CharacterData character)
+            if(unit is CharacterTableData character)
             {
                 speed = character.Speed;
             }
@@ -79,10 +78,16 @@ public class TurnManager : BaseManager
             unit.UnitSpeed = speed;
             units.Add(unit);
         }
-        units.Sort((a,b) =>
+        units.Sort((a, b) =>
         {
-            return b.UnitSpeed.CompareTo(a.UnitSpeed);
-            });
+            int cmp = b.UnitSpeed.CompareTo(a.UnitSpeed);
+            if (cmp == 0)
+            {
+                return Random.Range(-1, 2); // -1, 0, 1 ä»¥??ì„êµ¹ è«›ì„‘ì†š
+            }
+            return cmp;
+        });
+
 
         m_units.Clear();
         foreach (var unit in units)
@@ -92,13 +97,11 @@ public class TurnManager : BaseManager
 
         m_currentTurnUnit = m_units.First.Value;
         m_units.RemoveFirst();
-        Debug.Log(m_currentTurnUnit.UnitSpeed);
     }
 
     public override void SetTurn(TurnManager turnManager, CharacterManager characterManager, MonsterManager monsterManager, CardManager cardManager)
     {
         int pos = m_units.Count - (int)(m_currentTurnUnit.UnitSpeed + 20) / 20 + 1;
-        Debug.Log("»ğÀÔÇÒ À§Ä¡" + pos);
         List<Unit> units = new List<Unit>();
         foreach (var unit in m_units)
         {

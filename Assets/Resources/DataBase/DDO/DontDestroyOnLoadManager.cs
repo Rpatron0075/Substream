@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 
+[System.Serializable]
 public class DontDestroyOnLoadManager : MonoBehaviour
 {
     private static DontDestroyOnLoadManager instance;
@@ -25,45 +27,69 @@ public class DontDestroyOnLoadManager : MonoBehaviour
             return instance;
         }
     }
+
     [SerializeField]
     private CSVManager m_CSVManager;
     [SerializeField]
-    private GameManager m_GameManager;
+    private ResourceManager m_ResourceManager;
 
-    private Dictionary<string, DataScriptableObjects> m_DataBaseDic;
+    public ResourceManager ResourceManager
+    {
+        get { return m_ResourceManager; }
+    }
 
+    private Dictionary<string, DataScriptableObjects> m_DataBase;
+
+    [SerializeField]
+    private CardTableDataBase m_cardTable;
+    [SerializeField]
+    private CardSkillTableDataBase m_cardSkillTable;
+    [SerializeField]
+    private CharacterTableDataBase m_CharacterTable;
     [SerializeField]
     private LocalUserDataBase m_localUser;
     [SerializeField]
-    private PrototypeCharacterDataBase m_prototypeCharacter;
-    [SerializeField]
-    private CharacterDataBase m_character;
-    [SerializeField]
-    private CardDataBase m_card;
+    private StatusEffectDataBase m_statusEffect;
     [SerializeField]
     private UseCardDataBase m_useCard;
 
 
+    public CardTableDataBase CardTableDataBase { get => m_cardTable; }
+    public CardSkillTableDataBase CardSkillTableDataBase { get => m_cardSkillTable; }
+    public CharacterTableDataBase CharacterTableDataBase { get => m_CharacterTable; }
+    public LocalUserDataBase LocalUserDataBase { get => m_localUser; }
+    public StatusEffectDataBase StatusEffectDataBase { get => m_statusEffect; }
+    public UseCardDataBase UseCardDataBase { get => m_useCard; }
 
-    public LocalUserDataBase LocalUser { get => m_localUser; }
-    public PrototypeCharacterDataBase PrototypeCharacter { get => m_prototypeCharacter; }
-    public CharacterDataBase Character { get => m_character; }
-    public CardDataBase Card { get => m_card; }
-    public UseCardDataBase UseCard { get => m_useCard; }
+    public CardTableData CardTable(int ID)
+    {
+        return m_cardTable.CardTable[ID];
+    }
+    public CardSkillTableData CardSkillTable(int ID)
+    {
+        return m_cardSkillTable.CardSkillTable[ID];
+    }
+    public LocalUserData LocalUser(int ID)
+    {
+        return m_localUser.LocalUser[ID];
+    }
+    public CharacterTableData PrototypeCharacter(int ID)
+    {
+        return m_CharacterTable.CharacterTable[ID];
+    }
+    public CharacterTableData Character(int ID)
+    {
+        return m_CharacterTable.CharacterTable[ID];
+    }
+    public UseCardData UseCard(int PrototypeUnitID, int CardID)
+    {
+        var key = (PrototypeUnitID, CardID);
+        return m_useCard.UseCard[key];
+    }
 
     private void Awake()
     {
-        /*
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-            Initialize();
-        }
-        else
-        {
-            Destroy(gameObject); // 吝汗 积己 规瘤
-        }*/
+
     }
 
     public void Initialize()
@@ -75,34 +101,30 @@ public class DontDestroyOnLoadManager : MonoBehaviour
         }
         else
         {
-            Destroy(gameObject); // 吝汗 积己 规瘤
+            Destroy(gameObject); // 欷戨车 靸濎劚 氚╈
         }
 
-        m_DataBaseDic = new Dictionary<string, DataScriptableObjects>();
+        
+        m_DataBase = new Dictionary<string, DataScriptableObjects>();
 
+        m_cardSkillTable = new CardSkillTableDataBase();
+        m_cardTable = new CardTableDataBase();
+        m_CharacterTable = new CharacterTableDataBase();
         m_localUser = new LocalUserDataBase();
-        m_prototypeCharacter = new PrototypeCharacterDataBase();
-        m_character = new CharacterDataBase();
-        m_card = new CardDataBase();
+        m_statusEffect = new StatusEffectDataBase();
         m_useCard = new UseCardDataBase();
 
-        m_localUser.LocalUserList.Clear();
-        m_prototypeCharacter.PrototypeCharacterList.Clear();
-        m_character.CharacterList.Clear();
-        m_card.CardList.Clear();
-        m_useCard.UseCardList.Clear();
+        m_DataBase.Add("CardSkillTable", m_cardSkillTable);
+        m_DataBase.Add("CardTable", m_cardTable);
+        m_DataBase.Add("CharacterTable", m_CharacterTable);
+        m_DataBase.Add("LocalUser", m_localUser);
+        m_DataBase.Add("StatusEffect", m_statusEffect);
+        m_DataBase.Add("UseCard", m_useCard);
 
-        m_localUser.LocalUser.Clear();
-        m_prototypeCharacter.PrototypeCharacter.Clear();
-        m_character.Character.Clear();
-        m_card.Card.Clear();
-        m_useCard.UseCard.Clear();
-
-        m_DataBaseDic.Add("LocalUser", m_localUser);
-        m_DataBaseDic.Add("PrototypeCharacter", m_prototypeCharacter);
-        m_DataBaseDic.Add("Character", m_character);
-        m_DataBaseDic.Add("Card", m_card);
-        m_DataBaseDic.Add("UseCard", m_useCard);
+        foreach (var DB in m_DataBase)
+        {
+            DB.Value.ClearContainer();
+        }
 
         GameObject[] DDO = GameObject.FindObjectsOfType<GameObject>(false);
         foreach (var ddo in DDO)
@@ -114,50 +136,26 @@ public class DontDestroyOnLoadManager : MonoBehaviour
             
             if (ddo.CompareTag("DDO") && ddo.name == "GameManager")// && SceneManager.GetActiveScene() != ddo.scene)
             {
-                m_GameManager = ddo.transform.gameObject.GetComponent<GameManager>();
+                m_ResourceManager = ddo.transform.gameObject.GetComponent<ResourceManager>();
             }
         }
         DDO = null;
 
-        m_CSVManager.Initialize(m_DataBaseDic);
-        m_GameManager.Initialize();
+        m_CSVManager.Initialize(m_DataBase);
+        m_ResourceManager.Initialize();
 
-        m_localUser.TranslateListToDic(m_GameManager.SelectUserID);
-        m_prototypeCharacter.TranslateListToDic(m_GameManager.SelectUserID);
-        m_character.TranslateListToDic(m_GameManager.SelectUserID);
-        m_card.TranslateListToDic(m_GameManager.SelectUserID);
-        m_useCard.TranslateListToDic(m_GameManager.SelectUserID);
-
-        foreach(var LU in m_localUser.LocalUserList)
+        foreach(var DB in  m_DataBase)
         {
-            Debug.Log("LocalUser :" + LU.ID);
-        }
-        foreach (var PU in m_prototypeCharacter.PrototypeCharacterList)
-        {
-            Debug.Log("PrototypeUnit : " + PU.ID + " " + PU.Name + " " + PU.InstanceCounter);
-        }
-        foreach (var U in m_character.CharacterList)
-        {
-            Debug.Log("Unit : " + U.UserID + " " + U.PrototypeUnitID + " " + U.InstanceID);
-
-        }
-        foreach (var C in m_card.CardList)
-        {
-            Debug.Log("Card : " + C.ID + " " + C.Name + " " + C.Type + " " + C.Rank + " " + C.Cost + " " + C.TargetCount + " " + C.Explanation);
-        }
-        foreach (var UC in m_useCard.UseCardList) 
-        {
-            Debug.Log("UseCard :" + UC.PrototypeUnitID + " " + UC.CardID);
+            DB.Value.TranslateListToDic(m_ResourceManager.SelectUserID);
         }
     }
 
     public bool saveData()
     {
-        m_localUser.TranslateDicToListAtSaveDatas(m_GameManager.SelectUserID);
-        m_prototypeCharacter.TranslateDicToListAtSaveDatas(m_GameManager.SelectUserID);
-        m_character.TranslateDicToListAtSaveDatas(m_GameManager.SelectUserID);
-        m_card.TranslateDicToListAtSaveDatas(m_GameManager.SelectUserID);
-        m_useCard.TranslateDicToListAtSaveDatas(m_GameManager.SelectUserID);
-        return m_CSVManager.SaveToCSVAllFile(m_DataBaseDic);
+        foreach (var DB in m_DataBase)
+        {
+            DB.Value.TranslateDicToListAtSaveDatas(m_ResourceManager.SelectUserID);
+        }
+        return m_CSVManager.SaveToCSVAllFile(m_DataBase);
     }
 }

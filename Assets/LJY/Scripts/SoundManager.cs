@@ -24,8 +24,9 @@ public class SoundManager : MonoBehaviour
     private void Start()
     {
         GameObject container = GameObject.Find("AudioSourceContainer").gameObject;
-        if (_buttonEffect)
-        { _audioSource.Add(container.transform.Find("MainContentButtons").GetComponent<AudioSource>()); }
+        if (_buttonEffect) { 
+            _audioSource.Add(container.transform.Find("MainContentButtons").GetComponent<AudioSource>()); 
+        }
     }
 
     /// <summary>
@@ -36,14 +37,12 @@ public class SoundManager : MonoBehaviour
     /// <param name="clip">>> 오디오 클립</param>
     public void SetButtonSoundEvent<T>(Button button, AudioClip clip) where T : EventBase
     {
-        if (typeof(T) == typeof(PointerEnterEvent))
-        {
+        if (typeof(T) == typeof(PointerEnterEvent)) {
             button.RegisterCallback<PointerEnterEvent>(PlayHoverSound);
             if (!sounds.ContainsKey(clip.name))
                 sounds.Add(clip.name, clip);
         }
-        else if (typeof(T) == typeof(ClickEvent))
-        {
+        else if (typeof(T) == typeof(ClickEvent)) {
             button.RegisterCallback<ClickEvent>(PlaySelectSound);
             if (!sounds.ContainsKey(clip.name))
                 sounds.Add(clip.name, clip);
@@ -53,8 +52,7 @@ public class SoundManager : MonoBehaviour
     private void PlayHoverSound(PointerEnterEvent evt)
     {
         AudioSource audioSource = GetAudioSource("MainContentButtons");
-        if (_audioSource != null)
-        {
+        if (_audioSource != null) {
             audioSource.PlayOneShot(sounds["hover"]);
         }
     }
@@ -62,8 +60,7 @@ public class SoundManager : MonoBehaviour
     private void PlaySelectSound(ClickEvent evt)
     {
         AudioSource audioSource = GetAudioSource("MainContentButtons");
-        if (_audioSource != null)
-        {
+        if (_audioSource != null) {
             audioSource.PlayOneShot(sounds["select"]);
         }
     }

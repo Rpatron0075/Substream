@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -25,7 +25,10 @@ public class UseCardDataBase : DataScriptableObjects
         foreach (var data in UseCardList)
         {
             var key = (data.PrototypeUnitID, data.CardID);
-            UseCard.Add(key, data);
+            if (UseCard.TryAdd(key, data))
+            {
+                result = false;
+            }
         }
         return result;
     }
@@ -53,5 +56,10 @@ public class UseCardDataBase : DataScriptableObjects
             data.BattleReward = LocalUserDataDic[data.ID].BattleReward;
             */
         }
+    }
+    public override void ClearContainer()
+    {
+        UseCardList.Clear();
+        UseCard.Clear();
     }
 }

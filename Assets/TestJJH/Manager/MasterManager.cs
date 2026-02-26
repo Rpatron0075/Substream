@@ -18,14 +18,22 @@ public class MasterManager : MonoBehaviour
     [SerializeField]
     private CardUIManager m_cardUIManager;
     [SerializeField]
-    private DontDestroyOnLoadManager DDOManager;
-    [SerializeField]
     private MonsterManager m_monsterManager;
     [SerializeField]
     private MonsterUIManager m_monsterUIManager;
 
+    [SerializeField]
+    private SkillScheduleManager m_skillScheduleManager;
+
     private LinkedList<BaseManager> m_managers;
 
+    [SerializeField]
+    private DontDestroyOnLoadManager DDOManager;
+
+    public SkillScheduleManager SkillScheduleManager
+    {
+        get { return m_skillScheduleManager; }
+    }
     public void Awake()
     {
         DDOManager.Initialize();
@@ -40,23 +48,27 @@ public class MasterManager : MonoBehaviour
         m_managers.AddLast(m_turnUIManager);
         m_managers.AddLast(m_cardManager);
         m_managers.AddLast(m_cardUIManager);
+        m_managers.AddLast(m_skillScheduleManager);
         
         for (LinkedListNode<BaseManager> node = m_managers.First; node != null; node = node.Next)
         {
             node.Value.Initialize(this, m_turnManager);
             BaseManager temtManager;
             if (!node.Value.TryGetComponent<BaseManager>(out temtManager)) continue;
+            temtManager.ConnectsDataBase();
+            temtManager.DataInitialize(m_turnManager, m_characterManager, m_monsterManager);
         }
 
         for (LinkedListNode<BaseManager> node = m_managers.First; node != null; node = node.Next)
         {
-            node.Value.DataInitialize(m_turnManager, m_characterManager, m_monsterManager);
+            IUpdatableManager temtManager;
+            if(node.Value.TryGetComponent<IUpdatableManager>(out temtManager)) m_IUpdatableManagers.AddFirst(temtManager); ;
         }
 
-        m_cardUIManager.Synchronization(m_cardManager);
         m_characterUIManager.Synchronization(m_characterManager);
         m_monsterUIManager.Synchronization(m_monsterManager);
         m_turnUIManager.Synchronization(m_turnManager);
+        m_cardUIManager.Synchronization(m_cardManager);
     }
 
     public void Update()
@@ -73,8 +85,10 @@ public class MasterManager : MonoBehaviour
         {
             node.Value.SetTurn(m_turnManager,m_characterManager, m_monsterManager, m_cardManager);
         }
-        m_cardUIManager.Synchronization(m_cardManager);
+
         m_turnUIManager.Synchronization(m_turnManager);
+        m_cardUIManager.Synchronization(m_cardManager);
+
     }
 
     public void UseCard(Button card, int Cost)
