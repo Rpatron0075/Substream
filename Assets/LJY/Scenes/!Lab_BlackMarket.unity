@@ -342,6 +342,7 @@ MonoBehaviour:
   SFX_DOORBELL: SFX_Doorbell
   SFX_DOOR: SFX_Door
   SFX_COIN: SFX_Coin
+  SFX_OPENSLOT: SFX_OpenSlot
   VO_ENTER: VO_Enter
   VO_BUY_1: VO_Buy_1
   VO_BUY_2: VO_Buy_2
