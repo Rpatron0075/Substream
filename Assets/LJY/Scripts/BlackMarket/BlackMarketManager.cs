@@ -1,3 +1,4 @@
+using Audio.Controller;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -222,6 +223,20 @@ namespace UI.BlackMarket
         [SerializeField] [Tooltip("로컬 상의 플레이어 데이터")]
         private LocalUserDataBase _localUserData;
 
+        [Header("Audio References")]
+        [SerializeField] private string BGM_BLACKMARKET = "BGM_BlackMarket";
+        [SerializeField] private string SFX_DOORBELL = "SFX_Doorbell";
+        [SerializeField] private string SFX_DOOR = "SFX_Door";
+        [SerializeField] private string SFX_COIN = "SFX_Coin";
+        [SerializeField] private string SFX_OPENSLOT = "SFX_OpenSlot";
+        [SerializeField] private string VO_ENTER = "VO_Enter";
+        [SerializeField] private string VO_BUY_1 = "VO_Buy_1";
+        [SerializeField] private string VO_BUY_2 = "VO_Buy_2";
+        [SerializeField] private string VO_DISABLED = "VO_Disabled";
+        [SerializeField] private string VO_LOCKED = "VO_Locked";
+        [SerializeField] private string VO_REFRESH = "VO_Refresh";
+        [SerializeField] private string VO_EXIT = "VO_Exit";
+
         // -- 런타임 변수 --
         private int _additiveSlotCount = 0;
         private int _additiveRefreshingCount = 0;
@@ -230,14 +245,8 @@ namespace UI.BlackMarket
         private RarityProbability _curProbability;
         private RefreshState _curRefreshState;
         private List<int> _prevItemIDs;
-        private VisualElement _purchaseRoot;
         private int _selectedSlotIdx = -1;
         private ItemData _selectedItemData = null;
-        private VisualElement _savingsRoot;
-        private Label _lblSavingsLevel;
-        private Label _lblTotalSavings;
-        private SliderInt _sldAmount;
-        private Label _lblSelectedAmount;
 
         /// <summary>
         /// 최종 슬롯 개수
@@ -255,6 +264,12 @@ namespace UI.BlackMarket
         private List<VisualElement> _slotList =new List<VisualElement>();
         private VisualElement _settingRoot;
         private Button _btnRefresh;
+        private VisualElement _purchaseRoot;
+        private VisualElement _savingsRoot;
+        private Label _lblSavingsLevel;
+        private Label _lblTotalSavings;
+        private SliderInt _sldAmount;
+        private Label _lblSelectedAmount;
 
         // -- 아이템 --
         private ItemDatabase _itemDatabase;
@@ -305,21 +320,24 @@ namespace UI.BlackMarket
             _blackMarketRoot = _blackMarketUXML.Instantiate();
             _blackMarketRoot.style.flexGrow = 1;
             _blackMarketUID.rootVisualElement.Add(_blackMarketRoot);
+
             _blackMarketCWController.Initialize(_blackMarketRoot);
             _coinValue = _blackMarketRoot.Q<VisualElement>("Coin_Panel").Q<Label>("Value");
             _slotContainer = _blackMarketRoot.Q<VisualElement>("Item_Grid_Container");
             _btnRefresh = _blackMarketRoot.Q<Button>("Btn_Refresh");
+
+            CreateAndHidePanels();
+
+            // 버튼 이벤트 연결
+            if (_btnController != null) {
+                _btnController.ConnectButtonEvt(_blackMarketRoot);
+            }
 
             // 데이터 초기화
             Initialize(Savings, MembershipFee);
 
             // 아이템 슬롯 생성
             StartMarket();
-
-            // 버튼 이벤트 연결
-            if (_btnController != null) {
-                _btnController.ConnectButtonEvt(_blackMarketRoot);
-            }
         }
 
         /// <summary>
@@ -327,10 +345,80 @@ namespace UI.BlackMarket
         /// </summary>
         public void CloseBlackMarket()
         {
+            AudioController.Instance.PlaySFX(SFX_DOOR);
+            AudioController.Instance.PlayVO(VO_EXIT);
+
             if (_blackMarketRoot != null) {
                 _blackMarketRoot.RemoveFromHierarchy(); // UI 제거
                 _blackMarketRoot = null;
             }
+        }
+
+        private void CreateAndHidePanels()
+        {
+            // --- 세팅 패널 ---
+            if (_settingPanelUXML != null) {
+                _settingRoot = _settingPanelUXML.Instantiate();
+                SetAbsolutePosition(_settingRoot);
+                _settingRoot.style.display = DisplayStyle.None;
+                _blackMarketRoot.Add(_settingRoot);
+
+                Button closeBtn = _settingRoot.Q<Button>("Btn_CloseSetting");
+                if (closeBtn != null) closeBtn.clicked += CloseSettingPanel;
+
+                if (SettingPanelController.Instance != null) {
+                    SettingPanelController.Instance.ConnectSettingUI(_settingRoot);
+                }
+            }
+
+            // --- 구매 팝업 패널 ---
+            if (_purchaseUXML != null) {
+                _purchaseRoot = _purchaseUXML.Instantiate();
+                SetAbsolutePosition(_purchaseRoot);
+                _purchaseRoot.style.display = DisplayStyle.None;
+                _blackMarketRoot.Add(_purchaseRoot);
+
+                if (_btnController != null) {
+                    _btnController.ConnectPopupBtnEvt(_purchaseRoot);
+                }
+            }
+
+            // --- 저축 팝업 패널 ---
+            if (_savingsUXML != null) {
+                _savingsRoot = _savingsUXML.Instantiate();
+                SetAbsolutePosition(_savingsRoot);
+                _savingsRoot.style.display = DisplayStyle.None;
+                _blackMarketRoot.Add(_savingsRoot);
+
+                _lblSavingsLevel = _savingsRoot.Q<Label>("Lbl_SavingsLevel");
+                _lblTotalSavings = _savingsRoot.Q<Label>("Lbl_TotalSavings");
+                _sldAmount = _savingsRoot.Q<SliderInt>("Sld_Amount");
+                _lblSelectedAmount = _savingsRoot.Q<Label>("Lbl_SelectedAmount");
+
+                if (_sldAmount != null && _lblSelectedAmount != null) {
+                    _sldAmount.RegisterValueChangedCallback(evt => {
+                        int snappedValue = Mathf.RoundToInt(evt.newValue / 100f) * 100;
+                        if (snappedValue != evt.newValue) {
+                            _sldAmount.SetValueWithoutNotify(snappedValue);
+                        }
+                        _lblSelectedAmount.text = $"{snappedValue:N0} G";
+                    });
+                }
+
+                if (_btnController != null) {
+                    _btnController.ConnectSavingsBtnEvt(_savingsRoot);
+                }
+            }
+        }
+
+        private void SetAbsolutePosition(VisualElement element)
+        {
+            element.style.position = Position.Absolute;
+            element.style.top = 0;
+            element.style.bottom = 0;
+            element.style.left = 0;
+            element.style.right = 0;
+            element.style.flexGrow = 1;
         }
 
         // <----- 초기화 ----->
@@ -374,6 +462,10 @@ namespace UI.BlackMarket
             _itemDatabase.SetExcludeItemIDs(null);
             _usedRefreshingCount = 0;
             GenerateMarketItems();
+            AudioController.Instance.PlayBGM(BGM_BLACKMARKET);
+            AudioController.Instance.PlaySFX(SFX_DOOR);
+            AudioController.Instance.PlaySFX(SFX_DOORBELL);
+            AudioController.Instance.PlayVO(VO_ENTER);
         }
 
         // <----- 세팅 기능 ----->
@@ -383,31 +475,13 @@ namespace UI.BlackMarket
                 Debug.LogError("설정 패널 UXML 미할당");
                 return;
             }
-
-            if (_settingRoot != null) return;
-
-            _settingRoot = _settingPanelUXML.Instantiate();
-            _settingRoot.style.position = Position.Absolute;
-            _settingRoot.style.top = 0;
-            _settingRoot.style.bottom = 0;
-            _settingRoot.style.left = 0;
-            _settingRoot.style.right = 0;
-            _settingRoot.style.flexGrow = 1;
-
-            _blackMarketRoot.Add(_settingRoot); // 블랙마켓 메인 루트 자식으로 추가
-
-            Button closeBtn = _settingRoot.Q<Button>("Btn_CloseSetting");
-            if (closeBtn != null) {
-                closeBtn.clicked += CloseSettingPanel;
-            }
+            _settingRoot.style.display = DisplayStyle.Flex;
         }
 
         public void CloseSettingPanel()
         {
-            if (_settingRoot != null)
-            {
-                _settingRoot.RemoveFromHierarchy(); // 화면에서 제거
-                _settingRoot = null; // 메모리 참조 해제
+            if (_settingRoot != null) {
+                _settingRoot.style.display = DisplayStyle.None;
             }
         }
 
@@ -621,10 +695,12 @@ namespace UI.BlackMarket
         {
             switch (_curRefreshState) {
                 case RefreshState.Disabled:
+                    AudioController.Instance.PlayVO(VO_DISABLED);
                     Debug.Log("대화창 : 아직 저축 금액이 부족하신데요? 저와의 신뢰 관계를 더 쌓으셔야겠어요.");
                     break;
 
                 case RefreshState.Locked:
+                    AudioController.Instance.PlayVO(VO_LOCKED);
                     Debug.Log("대화창 : 사용 가능한 새로고침 횟수를 전부 소진하셨어요.");
                     break;
 
@@ -646,6 +722,7 @@ namespace UI.BlackMarket
 
                     GenerateMarketItems();
 
+                    AudioController.Instance.PlayVO(VO_REFRESH);
                     Debug.Log("대화창 : 새로운 상품이 준비되었습니다!");
                     break;
             }
@@ -676,16 +753,7 @@ namespace UI.BlackMarket
                 return;
             }
 
-            if (_purchaseRoot != null) return;
-
-            _purchaseRoot = _purchaseUXML.Instantiate();
-            _purchaseRoot.style.position = Position.Absolute;
-            _purchaseRoot.style.top = 0;
-            _purchaseRoot.style.bottom = 0;
-            _purchaseRoot.style.left = 0;
-            _purchaseRoot.style.right = 0;
-
-            _blackMarketRoot.Add(_purchaseRoot);
+            _purchaseRoot.style.display = DisplayStyle.Flex;
 
             // 정보만 갈아끼우기
             Label popupName = _purchaseRoot.Q<Label>("Lbl_PopupName");
@@ -698,14 +766,14 @@ namespace UI.BlackMarket
             if (popupIcon != null && item.Image != null) {
                 popupIcon.style.backgroundImage = new StyleBackground(item.Image);
             }
-            popupBackground.style.borderBottomColor = GetRarityColor(item.Rarity);
-            popupBackground.style.borderLeftColor = GetRarityColor(item.Rarity);
-            popupBackground.style.borderRightColor = GetRarityColor(item.Rarity);
-            popupBackground.style.borderTopColor = GetRarityColor(item.Rarity);
-
-            if (_btnController != null) {
-                _btnController.ConnectPopupBtnEvt(_purchaseRoot);
+            if (popupBackground != null) {
+                popupBackground.style.borderBottomColor = GetRarityColor(item.Rarity);
+                popupBackground.style.borderLeftColor = GetRarityColor(item.Rarity);
+                popupBackground.style.borderRightColor = GetRarityColor(item.Rarity);
+                popupBackground.style.borderTopColor = GetRarityColor(item.Rarity);
             }
+
+            AudioController.Instance.PlaySFX(SFX_OPENSLOT);
         }
 
         /// <summary>
@@ -714,8 +782,7 @@ namespace UI.BlackMarket
         public void ClosePurchasePopup()
         {
             if (_purchaseRoot != null) {
-                _purchaseRoot.RemoveFromHierarchy();
-                _purchaseRoot = null;
+                _purchaseRoot.style.display = DisplayStyle.None;
             }
             _selectedSlotIdx = -1;
             _selectedItemData = null;
@@ -752,6 +819,10 @@ namespace UI.BlackMarket
                 _itemsData[_selectedSlotIdx] = null;
                 LockSlotUI(_slotList[_selectedSlotIdx]);
 
+                AudioController.Instance.PlaySFX(SFX_COIN);
+                if (Random.Range(0, 2) == 0) AudioController.Instance.PlayVO(VO_BUY_1);
+                else AudioController.Instance.PlayVO(VO_BUY_2);
+
                 Debug.Log("대화창 : 성공적으로 거래가 성사되었습니다.");
                 ClosePurchasePopup();
             }
@@ -772,49 +843,20 @@ namespace UI.BlackMarket
         /// </summary>
         public void OpenSavingsPopup()
         {
-            if (_savingsUXML == null) return;
-            if (_savingsRoot != null) return;
-
-            _savingsRoot = _savingsUXML.Instantiate();
-            _savingsRoot.style.position = Position.Absolute;
-            _savingsRoot.style.top = 0;
-            _savingsRoot.style.bottom = 0;
-            _savingsRoot.style.left = 0;
-            _savingsRoot.style.right = 0;
-
-            _blackMarketRoot.Add(_savingsRoot);
-
-            _lblSavingsLevel = _savingsRoot.Q<Label>("Lbl_SavingsLevel");
-            _lblTotalSavings = _savingsRoot.Q<Label>("Lbl_TotalSavings");
-            _sldAmount = _savingsRoot.Q<SliderInt>("Sld_Amount");
-            _lblSelectedAmount = _savingsRoot.Q<Label>("Lbl_SelectedAmount");
-
-            if (_sldAmount != null && _lblSelectedAmount != null) {
-                _sldAmount.RegisterValueChangedCallback(evt => { 
-                    int snappedValue = Mathf.RoundToInt(evt.newValue / 100f) * 100; // 100 단위로 반올림
-
-                    if (snappedValue != evt.newValue) {
-                        _sldAmount.SetValueWithoutNotify(snappedValue);
-                    }
-                    _lblSelectedAmount.text = $"{snappedValue:N0} G";
-                });
+            if (_savingsRoot == null) {
+                Debug.LogError("저축 UI Root 미할당");
+                return; 
             }
 
+            _savingsRoot.style.display = DisplayStyle.Flex;
             UpdateSavingsPopupUI();
-
-            if (_btnController != null) {
-                _btnController.ConnectSavingsBtnEvt(_savingsRoot);
-            }
         }
 
         public void CloseSavingsPopup()
         {
             if (_savingsRoot != null) {
-                _savingsRoot.RemoveFromHierarchy();
-                _savingsRoot = null;
+                _savingsRoot.style.display = DisplayStyle.None;
             }
-            _sldAmount = null;
-            _lblSelectedAmount = null;
         }
 
         /// <summary>

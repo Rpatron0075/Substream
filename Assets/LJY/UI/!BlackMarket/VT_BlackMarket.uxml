@@ -1,8 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:Template name="VT_CharacterWidget" src="project://database/Assets/LJY/UI/Lobby/VT_CharacterWidget.uxml?fileID=9197481963319205126&amp;guid=4117f1b178af0274fad9f59c04a3db1e&amp;type=3#VT_CharacterWidget" />
     <ui:Template name="VT_ItemSlot" src="project://database/Assets/LJY/UI/!BlackMarket/VT_ItemSlot.uxml?fileID=9197481963319205126&amp;guid=957e5f27e8d228b4a8b603955d06a7c2&amp;type=3#VT_ItemSlot" />
-    <Style src="project://database/Assets/LJY/UI/!BlackMarket/SS_BlackMarket.uss?fileID=7433441132597879392&amp;guid=863ec9cce07629941a83405c43f20b37&amp;type=3#SS_BlackMarket" />
+    <Style src="project://database/Assets/LJY/UI/!BlackMarket/USS_BlackMarket.uss?fileID=7433441132597879392&amp;guid=863ec9cce07629941a83405c43f20b37&amp;type=3#USS_BlackMarket" />
     <Style src="project://database/Assets/LJY/UI/Setting/Setting.uss?fileID=7433441132597879392&amp;guid=a85876118c8a21a468c4a04237cb1df4&amp;type=3#Setting" />
+    <Style src="project://database/Assets/LJY/UI/!BlackMarket/USS_CustomScroller.uss?fileID=7433441132597879392&amp;guid=106796ce9aaed194d9b1b8b668612d04&amp;type=3#USS_CustomScroller" />
     <ui:VisualElement name="Background" style="flex-grow: 1; width: 100%; height: 100%; background-color: rgb(40, 40, 40);">
         <ui:VisualElement name="Header_Container" style="height: 10%; width: 100%; flex-direction: row; justify-content: space-between; align-items: center; background-color: rgba(59, 59, 59, 0.95); padding-left: 20px; padding-right: 20px; border-bottom-width: 2px; border-bottom-color: rgba(255, 255, 255, 0.1);">
             <ui:VisualElement name="Coin_Panel" style="flex-direction: row; align-items: center; background-color: rgba(0, 0, 0, 0.5); border-radius: 10px; padding: 5px 15px; height: 70%;">
@@ -20,7 +21,7 @@
                     <ui:Button name="Btn_Refresh" text="새로고침 x1" class="bm_btn" />
                     <ui:Button name="Btn_Savings" class="bm_btn" style="width: 300px;" />
                 </ui:VisualElement>
-                <ui:ScrollView mode="Vertical" style="flex-grow: 1; margin-bottom: 20px;">
+                <ui:ScrollView mode="Vertical" horizontal-scroller-visibility="Hidden" name="Slot_Container" style="flex-grow: 1; margin-bottom: 20px;">
                     <ui:VisualElement name="Item_Grid_Container" style="flex-direction: row; flex-wrap: wrap; align-items: flex-start; justify-content: flex-start;">
                         <ui:Instance template="VT_ItemSlot" name="VT_ItemSlot" style="flex-shrink: 0; margin-top: 0; margin-right: 12px; margin-bottom: 10px; margin-left: 0;" />
                         <ui:Instance template="VT_ItemSlot" name="VT_ItemSlot" style="flex-shrink: 0; margin-top: 0; margin-right: 12px; margin-bottom: 10px; margin-left: 0;" />
