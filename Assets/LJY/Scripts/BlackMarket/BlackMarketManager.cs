@@ -479,7 +479,7 @@ namespace UI.BlackMarket
             }
             _settingRoot.style.display = DisplayStyle.Flex;
         }
-
+         
         public void CloseSettingPanel()
         {
             if (_settingRoot != null) {
