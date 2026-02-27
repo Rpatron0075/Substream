@@ -63,10 +63,8 @@ namespace UI.BlackMarket
     class ItemDatabase
     {
         private List<ItemData> _masterItemDB = new List<ItemData>();
-
         private List<CardData> _curCardPool = new List<CardData>();
         private List<OpartsData> _curOpartsPool = new List<OpartsData>();
-
         private List<int> _excludeItemIDs = new List<int>();
 
         /// <summary>
@@ -212,8 +210,7 @@ namespace UI.BlackMarket
         [SerializeField] [Tooltip("멤버십 등급별 필요 비용 구간")]
         private List<int> membershipThresholds = new List<int>();
 
-        [SerializeField]
-        [Tooltip("멤버십 등급별 등장 확률 (인덱스 0 = 0단계 확률)")]
+        [SerializeField] [Tooltip("멤버십 등급별 등장 확률 (인덱스 0 = 0단계 확률)")]
         private List<RarityProbability> rarityProbabilities = new List<RarityProbability>();
 
         [Tooltip("저축 0단계 기준, 기본 지급되는 아이템 슬롯 개수")]
@@ -429,6 +426,8 @@ namespace UI.BlackMarket
         /// <param name="currentMembershipFee">현재 판에서 지불한 멤버십 비용</param>
         private void Initialize(long curSavings, int curMembershipFee)
         {
+            // _blackMarketCWController.SetCharacterImage(, .0f, .0f, 1.0f);
+
             CalculateSavingsEffect(curSavings);
             CalculateMembershipLevel(curMembershipFee);
 
@@ -698,12 +697,12 @@ namespace UI.BlackMarket
             switch (_curRefreshState) {
                 case RefreshState.Disabled:
                     AudioController.Instance.PlayVO(VO_DISABLED);
-                    Debug.Log("대화창 : 아직 저축 금액이 부족하신데요? 저와의 신뢰 관계를 더 쌓으셔야겠어요.");
+                    _blackMarketCWController.ShowLine("블랙마켓 딜러", "아직 저축 금액이 부족하신데요? 저와의 신뢰 관계를 더 쌓으셔야겠어요.");
                     break;
 
                 case RefreshState.Locked:
                     AudioController.Instance.PlayVO(VO_LOCKED);
-                    Debug.Log("대화창 : 사용 가능한 새로고침 횟수를 전부 소진하셨어요.");
+                    _blackMarketCWController.ShowLine("블랙마켓 딜러", "사용 가능한 새로고침 횟수를 전부 소진하셨어요.");
                     break;
 
                 case RefreshState.Active:
@@ -725,7 +724,7 @@ namespace UI.BlackMarket
                     GenerateMarketItems();
 
                     AudioController.Instance.PlayVO(VO_REFRESH);
-                    Debug.Log("대화창 : 새로운 상품이 준비되었습니다!");
+                    _blackMarketCWController.ShowLine("블랙마켓 딜러", "새로운 상품이 준비되었습니다!");
                     break;
             }
         }
@@ -825,11 +824,11 @@ namespace UI.BlackMarket
                 if (Random.Range(0, 2) == 0) AudioController.Instance.PlayVO(VO_BUY_1);
                 else AudioController.Instance.PlayVO(VO_BUY_2);
 
-                Debug.Log("대화창 : 성공적으로 거래가 성사되었습니다.");
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", "성공적으로 거래가 성사되었습니다.");
                 ClosePurchasePopup();
             }
             else {
-                Debug.Log("대화창 : 재화가 부족합니다.");
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", "재화가 부족합니다.");
             }
         }
 
@@ -874,10 +873,10 @@ namespace UI.BlackMarket
                 Savings += amount;
 
                 RefreshSavingsState();
-                Debug.Log($"대화창 : {amount}G 입금 완료!");
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", $"{amount}G 입금 완료!");
             }
             else {
-                Debug.Log("대화창 : 소지하신 재화가 부족합니다.");
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", "소지하신 재화가 부족합니다.");
             }
         }
 
@@ -928,14 +927,14 @@ namespace UI.BlackMarket
                     }
 
                     RefreshSavingsState();
-                    Debug.Log($"대화창 : {amount}G 인출 완료!");
+                    _blackMarketCWController.ShowLine("블랙마켓 딜러", $"{amount}G 인출 완료!");
                 }
                 else {
-                    Debug.Log($"대화창 : 고객님, 이미 블랙마켓 뱅크에서 제공된 혜택을 사용하셔서 해당 금액은 인출이 불가합니다.");
+                    _blackMarketCWController.ShowLine("블랙마켓 딜러", "고객님, 이미 블랙마켓 뱅크에서 제공된 혜택을 사용하셔서 해당 금액은 인출이 불가합니다.");
                 }
             }
             else {
-                Debug.Log("대화창 : 인출할 저축액이 부족합니다.");
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", "인출할 저축액이 부족합니다.");
             }
         }
 
