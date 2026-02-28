@@ -15,7 +15,7 @@ MonoBehaviour:
   audioList:
   - ID: BGM_BlackMarket
     clip: {fileID: 8300000, guid: c9b2f70e7d158f04ea597c41803ba788, type: 3}
-    volume: 1
+    volume: 0.4
   - ID: SFX_Doorbell
     clip: {fileID: 8300000, guid: afc88711d38e8114eac4a8a5dc9c2c98, type: 3}
     volume: 0.4

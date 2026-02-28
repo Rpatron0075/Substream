@@ -33,7 +33,6 @@ namespace UI.BlackMarket
 
         private void OnClickEnterShop()
         {
-            Debug.Log("블랙마켓 입장");
             if (BlackMarketManager.Instance != null) {
                 BlackMarketManager.Instance.OpenBlackMarket();
             }

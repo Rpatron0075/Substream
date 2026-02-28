@@ -128,27 +128,26 @@
 }
 
 .line_window-popdown {
-    flex-grow: 0;
     position: absolute;
-    width: 23%;
-    height: 15%;
-    left: 23%;
-    top: 40%;
-    background-color: rgba(0, 0, 0, 0.59);
+    width: 350px;
+    left: 15%;
+    bottom: 15%;
+    background-color: rgba(15, 15, 18, 0.9);
+    border-radius: 12px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.15);
+    padding: 20px 24px;
+    flex-direction: column;
     opacity: 0;
-    transition-duration: 0.8s;
-    transition-timing-function: ease-in-circ;
-    translate: 80% 0;
+    translate: 50px 0;
+    transition-property: opacity, translate;
+    transition-duration: 0.4s, 0.4s;
+    transition-timing-function: ease-in-out, ease-in-out;
 }
 
 .line_window-popup {
-    translate: 0 0;
     opacity: 1;
-    transition-timing-function: ease-in-circ;
-    transition-duration: 0.8s;
-    position: absolute;
-    left: 23%;
-    top: 40%;
+    translate: 0 0;
 }
 
 .LD-button {
