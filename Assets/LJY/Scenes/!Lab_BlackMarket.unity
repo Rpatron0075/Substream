@@ -278,13 +278,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CurrentGold: 999999999999999
   Savings: 0
-  MembershipFee: 0
+  CurMembershipLevel: 0
   _blackMarketUID: {fileID: 155224124}
   _blackMarketUXML: {fileID: 9197481963319205126, guid: 040e64304515058408fd65bea76cf5cd, type: 3}
   _itemSlotUXML: {fileID: 9197481963319205126, guid: 957e5f27e8d228b4a8b603955d06a7c2, type: 3}
   _settingPanelUXML: {fileID: 9197481963319205126, guid: 5d7506b1cd7e2a54ea04dffa3740bfd0, type: 3}
   _purchaseUXML: {fileID: 9197481963319205126, guid: c54728516bc07a94096004570e80bb24, type: 3}
   _savingsUXML: {fileID: 9197481963319205126, guid: 0c441d75e5360204aab2037fa36cdc68, type: 3}
+  _membershipUXML: {fileID: 9197481963319205126, guid: eee49c2c4895d1a40ad66d5e2e21a049, type: 3}
   savingsThresholds:
   - value: 0
     additiveSlots: 0
@@ -313,7 +314,7 @@ MonoBehaviour:
   - value: 999
     additiveSlots: 6
     additiveRefreshing: 2
-  membershipThresholds: 000000003200000064000000c80000002c010000
+  membershipThresholds: 00000000e8030000c40900008813000010270000
   rarityProbabilities:
   - Name: "0\uB2E8\uACC4"
     CommonWeight: 80
@@ -383,6 +384,9 @@ MonoBehaviour:
   _depositBtnName: Btn_Deposit
   _withdrawBtnName: Btn_Withdraw
   _closeSavingsBtnName: Btn_CloseSavings
+  _membershipBtnName: Btn_Membership
+  _upgradeMembershipBtnName: Btn_UpgradeMembership
+  _closeMembershipBtnName: Btn_CloseMembership
 --- !u!114 &155224129
 MonoBehaviour:
   m_ObjectHideFlags: 0

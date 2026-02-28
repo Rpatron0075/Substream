@@ -2,6 +2,7 @@ using Audio.Controller;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UI.Utils;
 
 namespace UI.BlackMarket
 {
@@ -193,7 +194,6 @@ namespace UI.BlackMarket
         [Header("Debug 변수")]
         public long CurrentGold = 999999999999998;
         public int Savings = 500;
-        public int MembershipFee = 1000;
 
         [Header("UI References")]
         [SerializeField] private UIDocument _blackMarketUID;
@@ -202,6 +202,7 @@ namespace UI.BlackMarket
         [SerializeField] private VisualTreeAsset _settingPanelUXML;
         [SerializeField] private VisualTreeAsset _purchaseUXML;
         [SerializeField] private VisualTreeAsset _savingsUXML;
+        [SerializeField] private VisualTreeAsset _membershipUXML;
 
         [Header("Settings")]
         [SerializeField] [Tooltip("슬롯이 추가되는 저축액 기준")]
@@ -235,6 +236,9 @@ namespace UI.BlackMarket
         [SerializeField] private string VO_EXIT = "VO_Exit";
 
         // -- 런타임 변수 --
+        public int CurSavingsLevel { get; private set; } = 0;
+        public int CurMembershipLevel { get; private set; } = 0;
+
         private int _additiveSlotCount = 0;
         private int _additiveRefreshingCount = 0;
         private int _usedRefreshingCount = 0;
@@ -267,6 +271,9 @@ namespace UI.BlackMarket
         private Label _lblTotalSavings;
         private SliderInt _sldAmount;
         private Label _lblSelectedAmount;
+        private VisualElement _membershipRoot;
+        private Label _lblCurMembershipLevel;
+        private Label _lblMembershipUpgradeCost;
 
         // -- 아이템 --
         private ItemDatabase _itemDatabase;
@@ -331,7 +338,7 @@ namespace UI.BlackMarket
             }
 
             // 데이터 초기화
-            Initialize(Savings, MembershipFee);
+            Initialize(Savings, CurMembershipLevel);
 
             // 아이템 슬롯 생성
             StartMarket();
@@ -406,6 +413,22 @@ namespace UI.BlackMarket
                     _btnController.ConnectSavingsBtnEvt(_savingsRoot);
                 }
             }
+
+            // --- 멤버십 팝업 패널 ---
+            if (_membershipUXML != null) {
+                _membershipRoot = _membershipUXML.Instantiate();
+                SetAbsolutePosition(_membershipRoot);
+                _membershipRoot.style.display = DisplayStyle.None;
+                _membershipRoot.AddToClassList("popup-fade-base");
+                _blackMarketRoot.Add(_membershipRoot);
+
+                _lblCurMembershipLevel = _membershipRoot.Q<Label>("Lbl_CurrentMembershipLevel");
+                _lblMembershipUpgradeCost = _membershipRoot.Q<Label>("Lbl_MembershipUpgradeCost");
+
+                if (_btnController != null) {
+                    _btnController.ConnectMembershipBtnEvt(_membershipRoot);
+                }
+            }
         }
 
         private void SetAbsolutePosition(VisualElement element)
@@ -424,12 +447,16 @@ namespace UI.BlackMarket
         /// </summary>
         /// <param name="currentSavings">현재 플레이어의 누적 저축액</param>
         /// <param name="currentMembershipFee">현재 판에서 지불한 멤버십 비용</param>
-        private void Initialize(long curSavings, int curMembershipFee)
+        private void Initialize(long curSavings, int startMembershipLevel)
         {
             // _blackMarketCWController.SetCharacterImage(, .0f, .0f, 1.0f);
 
             CalculateSavingsEffect(curSavings);
-            CalculateMembershipLevel(curMembershipFee);
+            CalculateMembershipLevel(startMembershipLevel);
+
+            if (_btnController != null) {
+                _btnController.UpdateMembershipBtnText(CurMembershipLevel);
+            }
 
             Debug.Log(
                 $"[ BlackMarket ]\n" +
@@ -476,19 +503,18 @@ namespace UI.BlackMarket
                 Debug.LogError("설정 패널 UXML 미할당");
                 return;
             }
-            _settingRoot.style.display = DisplayStyle.Flex;
+            _settingRoot.ShowPopupFade();
         }
          
         public void CloseSettingPanel()
         {
-            if (_settingRoot != null) {
-                _settingRoot.style.display = DisplayStyle.None;
-            }
+            _settingRoot?.HidePopupFade();
         }
 
         // <----- 아이템 슬롯 기능 ----->
         private void CalculateSavingsEffect(long savings)
         {
+            CurSavingsLevel = 0;
             _additiveSlotCount = 0;
             _additiveRefreshingCount = 0;
 
@@ -497,30 +523,21 @@ namespace UI.BlackMarket
                 if (savings >= savingsThresholds[i].value) {
                     _additiveSlotCount = savingsThresholds[i].additiveSlots;
                     _additiveRefreshingCount = savingsThresholds[i].additiveRefreshing - _usedRefreshingCount;
+                    CurSavingsLevel = i;
                 }
                 else { break; }
             }
 
             _curRefreshState = (_additiveRefreshingCount > 0) ? RefreshState.Active : RefreshState.Disabled;
+            if (_btnController != null) {
+                _btnController.UpdateSavingsBtnText(CurSavingsLevel);
+            }
         }
 
-        private void CalculateMembershipLevel(int fee)
+        private void CalculateMembershipLevel(int startMembershipLevel)
         {
-            _curMembershipLevel = 0;
-
-            // 멤버십 비용에 따라 레벨 결정
-            for (int i = 0; i < membershipThresholds.Count; i++) {
-                if (fee >= membershipThresholds[i]) {
-                    _curMembershipLevel = i;
-                }
-                else { break; }
-            }
-
-            // 정해진 멤버십 Level 을 넘지 않도록
-            _curMembershipLevel = Mathf.Clamp(_curMembershipLevel, 0, rarityProbabilities.Count - 1);
-
-            // 멤버십 Level에 따라 현재의 각 희귀도별 카드 및 오파츠 등장 확률이 다르게 설정되도록 함
-            _curProbability = rarityProbabilities[_curMembershipLevel];
+            CurMembershipLevel = Mathf.Clamp(startMembershipLevel, 0, rarityProbabilities.Count - 1);
+            _curProbability = rarityProbabilities[CurMembershipLevel];
         }
 
         private void GenerateMarketItems()
@@ -754,8 +771,6 @@ namespace UI.BlackMarket
                 return;
             }
 
-            _purchaseRoot.style.display = DisplayStyle.Flex;
-
             // 정보만 갈아끼우기
             Label popupName = _purchaseRoot.Q<Label>("Lbl_PopupName");
             Label popupPrice = _purchaseRoot.Q<Label>("Lbl_PopupPrice");
@@ -774,6 +789,7 @@ namespace UI.BlackMarket
                 popupBackground.style.borderTopColor = GetRarityColor(item.Rarity);
             }
 
+            _purchaseRoot.ShowPopupFade();
             AudioController.Instance.PlaySFX(SFX_OPENSLOT);
         }
 
@@ -782,9 +798,7 @@ namespace UI.BlackMarket
         /// </summary>
         public void ClosePurchasePopup()
         {
-            if (_purchaseRoot != null) {
-                _purchaseRoot.style.display = DisplayStyle.None;
-            }
+            _purchaseRoot?.HidePopupFade();
             _selectedSlotIdx = -1;
             _selectedItemData = null;
         }
@@ -849,15 +863,13 @@ namespace UI.BlackMarket
                 return; 
             }
 
-            _savingsRoot.style.display = DisplayStyle.Flex;
+            _savingsRoot.ShowPopupFade();
             UpdateSavingsPopupUI();
         }
 
         public void CloseSavingsPopup()
         {
-            if (_savingsRoot != null) {
-                _savingsRoot.style.display = DisplayStyle.None;
-            }
+            _savingsRoot?.HidePopupFade();
         }
 
         /// <summary>
@@ -960,17 +972,77 @@ namespace UI.BlackMarket
         {
             if (_savingsRoot == null) return;
 
-            // 현재 누적 단계 계산 (CalculateSavingsEffect에서 세팅된 값 기반)
-            int currentLevel = 0;
-            for (int i = 0; i < savingsThresholds.Count; i++) {
-                if (Savings >= savingsThresholds[i].value) {
-                    currentLevel = i + 1;
-                }
-                else break;
+            if (_lblSavingsLevel != null) _lblSavingsLevel.text = $"Lv. {CurSavingsLevel}";
+            if (_lblTotalSavings != null) _lblTotalSavings.text = $"{Savings.ToString("N0")} G";
+        }
+
+        public void OpenMembershipPopup()
+        {
+            if (_membershipRoot == null) return;
+            UpdateMembershipPopupUI();
+            _membershipRoot.ShowPopupFade();
+        }
+
+        public void CloseMembershipPopup()
+        {
+            _membershipRoot?.HidePopupFade();
+        }
+
+        /// <summary>
+        /// 멤버십 다음 단계 업그레이드 요청
+        /// </summary>
+        public void UpgradeMembership()
+        {
+            if (CurMembershipLevel >= membershipThresholds.Count - 1) {
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", "고객님은 이미 최고의 VIP이십니다!");
+                return;
             }
 
-            if (_lblSavingsLevel != null) _lblSavingsLevel.text = $"Lv. {currentLevel}";
-            if (_lblTotalSavings != null) _lblTotalSavings.text = $"{Savings.ToString("N0")} G";
+            int nextLevel = CurMembershipLevel + 1;
+            int requiredCost = membershipThresholds[nextLevel];
+
+            if (CurrentGold >= requiredCost) {
+                // 골드 차감 및 레벨업
+                CurrentGold -= requiredCost;
+                CurMembershipLevel = nextLevel;
+                _curProbability = rarityProbabilities[CurMembershipLevel - 1];
+
+                // UI 갱신
+                if (_btnController != null) {
+                    _btnController.UpdateMembershipBtnText(CurMembershipLevel);
+                }
+
+                if (_coinValue != null) _coinValue.text = CurrentGold.ToString("N0");
+                UpdateMembershipPopupUI();
+
+                AudioController.Instance.PlaySFX(SFX_COIN);
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", 
+                    $"감사합니다!\n" +
+                    $"멤버십 {CurMembershipLevel}단계로 승급하셨습니다.\n" +
+                    $"다음 새로고침부터 더 좋은 물건을 약속드리죠.");
+            }
+            else {
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", "멤버십 승급 비용이 부족하시군요.");
+            }
+        }
+
+        /// <summary>
+        /// 멤버십 팝업의 텍스트 UI 갱신
+        /// </summary>
+        private void UpdateMembershipPopupUI()
+        {
+            if (_lblCurMembershipLevel != null)
+                _lblCurMembershipLevel.text = $"Lv. {CurMembershipLevel}";
+
+            if (_lblMembershipUpgradeCost != null) {
+                if (CurMembershipLevel >= membershipThresholds.Count - 1) {
+                    _lblMembershipUpgradeCost.text = "Max Level";
+                }
+                else {
+                    int nextCost = membershipThresholds[CurMembershipLevel + 1];
+                    _lblMembershipUpgradeCost.text = $"{nextCost:N0} G";
+                }
+            }
         }
 
         private Color GetRarityColor(ItemRarity rarity)
