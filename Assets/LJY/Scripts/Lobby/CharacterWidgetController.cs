@@ -1,10 +1,28 @@
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UI.Utils;
 
 public class CharacterWidgetController : MonoBehaviour
 {
+    [Header("이미지 컨트롤러")]
+    public Sprite CharacterSprite;
+    public int SpriteOffsetX;
+    public int SpriteOffsetY;
+    public int SpriteScaleRatio;
+
+    [Header("UI Element 이름")]
+    [SerializeField] private string CHAR_BUTTON = "LD_Button";
+    [SerializeField] private string CHAR_IMAGE = "LD_Character_image";
+    [SerializeField] private string SPEECH_BUBBLE = "Line_Window";
+    [SerializeField] private string SPEAKER_NAME = "Lbl_SpeakerName";
+    [SerializeField] private string SPEECH_TXT = "Lbl_LineText";
+
+    public Action OnCharacterClicked;
+
+    // -- 런타임 변수 --
+    private VisualElement _characterArea;
     private Button _characterButton;
-    private VisualElement _characterImage;
     private VisualElement _lineWindow;
     private Label _lblSpeakerName;
     private Label _lblLine;
@@ -25,12 +43,12 @@ public class CharacterWidgetController : MonoBehaviour
 
     public void Initialize(VisualElement root)
     {
-        _characterButton = root.Q<Button>("LD_Button");
-        _characterImage = root.Q<VisualElement>("LD_Character_image");
+        _characterButton = root.Q<Button>(CHAR_BUTTON);
+        _characterArea = root.Q<VisualElement>(CHAR_IMAGE);
 
-        _lineWindow = root.Q<VisualElement>("Line_Window");
-        _lblSpeakerName = root.Q<Label>("Lbl_SpeakerName");
-        _lblLine = root.Q<Label>("Lbl_LineText");
+        _lineWindow = root.Q<VisualElement>(SPEECH_BUBBLE);
+        _lblSpeakerName = root.Q<Label>(SPEAKER_NAME);
+        _lblLine = root.Q<Label>(SPEECH_TXT);
 
         if (_characterButton != null)
             _characterButton.RegisterCallback<ClickEvent>(OnPopupLine);
@@ -39,22 +57,15 @@ public class CharacterWidgetController : MonoBehaviour
             _lineWindow.style.display = DisplayStyle.None;
             _lineWindow.RegisterCallback<TransitionEndEvent>(OnTransitionEnd);
         }
+
+        SetupCharacterImage();
     }
 
-    /// <summary>
-    /// 캐릭터 이미지와 맞춤형 위치/크기를 적용
-    /// </summary>
-    /// <param name="sprite">변경할 캐릭터 스프라이트</param>
-    /// <param name="offsetX">좌우 이동 %값</param>
-    /// <param name="offsetY">상하 이동 %값</param>
-    /// <param name="scale">확대/축소 배율</param>
-    public void SetCharacterImage(Sprite sprite, float offsetX, float offsetY, float scale)
+    private void SetupCharacterImage()
     {
-        if (_characterImage == null) return;
-
-        _characterImage.style.backgroundImage = new StyleBackground(sprite);
-        _characterImage.style.translate = new StyleTranslate(new Translate(Length.Percent(offsetX), Length.Percent(offsetY), 0));
-        _characterImage.style.scale = new StyleScale(new Scale(new Vector3(scale, scale, 1f)));
+        if (_characterArea != null && CharacterSprite != null) {
+            _characterArea.SetImage(CharacterSprite, SpriteOffsetX, SpriteOffsetY, SpriteScaleRatio);
+        }
     }
 
     public void ShowLine(string speaker, string lineTxt)
@@ -63,16 +74,15 @@ public class CharacterWidgetController : MonoBehaviour
             _lblSpeakerName.text = speaker;
             _lblLine.text = lineTxt;
         }
-        TriggerPopup();
+        OnPopup();
     }
 
     private void OnPopupLine(ClickEvent evt)
     {
-        // 여기는 캐릭터 건드리면 출력하는 대사 들어감
-        TriggerPopup();
+        OnCharacterClicked?.Invoke();
     }
 
-    private void TriggerPopup()
+    private void OnPopup()
     {
         if (_lineWindow == null) return;
 
@@ -93,6 +103,10 @@ public class CharacterWidgetController : MonoBehaviour
             _lineWindow.RemoveFromClassList(POPUP_CLASS);
     }
 
+    /// <summary>
+    /// 애니메이션 종료 시점에 이동이 끝난 UI를 비활성화 하도록 제어함
+    /// </summary>
+    /// <param name="evt">UI 이동 종료 이벤트</param>
     private void OnTransitionEnd(TransitionEndEvent evt)
     {
         if (_lineWindow != null && !_lineWindow.ClassListContains(POPUP_CLASS)) {

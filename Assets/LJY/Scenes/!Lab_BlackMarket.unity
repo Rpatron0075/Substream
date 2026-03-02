@@ -278,7 +278,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CurrentGold: 999999999999999
   Savings: 0
-  CurMembershipLevel: 0
   _blackMarketUID: {fileID: 155224124}
   _blackMarketUXML: {fileID: 9197481963319205126, guid: 040e64304515058408fd65bea76cf5cd, type: 3}
   _itemSlotUXML: {fileID: 9197481963319205126, guid: 957e5f27e8d228b4a8b603955d06a7c2, type: 3}
@@ -339,6 +338,7 @@ MonoBehaviour:
   _baseSlotCount: 6
   _localUserData:
     LocalUserList: []
+  _itemIconDatabase: {fileID: 11400000, guid: e5e6a54e1c89f3d459385592ebbc1635, type: 2}
   BGM_BLACKMARKET: BGM_BlackMarket
   SFX_DOORBELL: SFX_Doorbell
   SFX_DOOR: SFX_Door
@@ -363,6 +363,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7fe6c36fd4c449428fc9f8a5115006f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CharacterSprite: {fileID: 21300000, guid: 5d217f9bfbb438f448b185b1f6893f66, type: 3}
+  SpriteOffsetX: 0
+  SpriteOffsetY: 0
+  SpriteScaleRatio: 1
+  CHAR_BUTTON: LD_Button
+  CHAR_IMAGE: LD_Character_image
+  SPEECH_BUBBLE: Line_Window
+  SPEAKER_NAME: Lbl_SpeakerName
+  SPEECH_TXT: Lbl_LineText
 --- !u!114 &155224128
 MonoBehaviour:
   m_ObjectHideFlags: 0
