@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UI.Utils;
+using Item;
 
 namespace UI.BlackMarket
 {
@@ -29,145 +30,6 @@ namespace UI.BlackMarket
         public int value;
         [Range(0, 10)] public int additiveSlots;
         [Range(0, 10)] public int additiveRefreshing;
-    }
-
-    #region ItemData
-    public enum ItemRarity
-    {
-        Common,
-        Rare,
-        Unique,
-        Legendary
-    }
-
-    [System.Serializable]
-    class ItemData
-    {
-        public int ID;
-        public string Name;
-        public ItemRarity Rarity;
-        public int Price;
-        public Sprite Image;
-    }
-
-    class CardData : ItemData
-    {
-        public int OwnerCharacterID;
-    }
-
-    class OpartsData : ItemData
-    {
-        public bool CanAppearShop;
-    }
-    #endregion
-
-    class ItemDatabase
-    {
-        private List<ItemData> _masterItemDB = new List<ItemData>();
-        private List<CardData> _curCardPool = new List<CardData>();
-        private List<OpartsData> _curOpartsPool = new List<OpartsData>();
-        private List<int> _excludeItemIDs = new List<int>();
-
-        /// <summary>
-        /// 이번 블랙마켓 씬에 등장할 수 있는 전체 아이템 풀 세팅
-        /// </summary>
-        public void CreateItemPool(List<int> partyCharacterIDs, List<int> ownedOpartsIDs)
-        {
-            _curCardPool.Clear();
-            _curOpartsPool.Clear();
-
-            foreach (var item in _masterItemDB) {
-                // 새로고침 시, 직전 아이템들은 제외됨
-                if (_excludeItemIDs != null && _excludeItemIDs.Contains(item.ID)) { continue; }
-
-                if (item is CardData card) {
-                    // 파티 내 캐릭터의 ID와 일치하는 카드만 추가
-                    if (partyCharacterIDs.Contains(card.OwnerCharacterID)) {
-                        _curCardPool.Add(card);
-                    }
-                }
-                else if (item is OpartsData oparts) {
-                    // 상점 등장 가능한 오파츠이면서, 현재 보유 중이 아닌 경우만 추가
-                    if (oparts.CanAppearShop && !ownedOpartsIDs.Contains(oparts.ID)) {
-                        _curOpartsPool.Add(oparts);
-                    }
-                }
-            }
-        }
-
-        public void SetExcludeItemIDs(List<int> ids)
-        {
-            _excludeItemIDs.Clear();
-            if (ids != null) {
-                _excludeItemIDs.AddRange(ids);
-            }
-        }
-
-        /// <summary>
-        /// 요청한 타입에 맞춰 해당 풀에서 아이템 추출
-        /// </summary>
-        /// <param name="type">요청한 아이템 타입</param>
-        /// <param name="rarity">희귀도</param>
-        /// <returns>아이템 데이터</returns>
-        public ItemData GetRandomItem(System.Type type, ItemRarity rarity)
-        {
-            if (type == typeof(CardData)) {
-                return ExtractItem(_curCardPool, rarity, type);
-            }
-            else if (type == typeof(OpartsData)) {
-                return ExtractItem(_curOpartsPool, rarity, type);
-            }
-
-            Debug.LogError($"알 수 없는 타입 요청 : {type}");
-            return null;
-        }
-
-        private ItemData ExtractItem<T>(List<T> pool, ItemRarity rarity, System.Type type) where T : ItemData
-        {
-            // 해당 희귀도의 아이템 필터링
-            List<T> filteredItems = pool.FindAll(item => item.Rarity == rarity);
-
-            // 해당 희귀도의 아이템이 소진되었을 경우의 예외 처리
-            if (filteredItems.Count == 0) {
-                if (pool.Count == 0) {
-                    Debug.LogWarning($"[{type.Name}]\n" +
-                        $"  타입의 남은 아이템이 풀에 없습니다\n" +
-                        $"  더미 아이템으로 대체됩니다\n");
-                    return GetDummyItem(type, rarity); // 풀이 완전 고갈 시 더미 반환
-                }
-
-                // 희귀도 상관없이 남은 아이템 중 하나를 반환
-                filteredItems = pool;
-            }
-
-            int ranIdx = Random.Range(0, filteredItems.Count);
-            T selectedItem = filteredItems[ranIdx];
-
-            // 상점 내 중복 등장 방지를 위해 풀에서 즉시 제거
-            pool.Remove(selectedItem);
-
-            return selectedItem;
-        }
-
-        private ItemData GetDummyItem(System.Type type, ItemRarity rarity)
-        {
-            int ranPrice = Random.Range(100, 80000);
-
-            if (type == typeof(CardData)) {
-                return new CardData { 
-                    ID = 000, 
-                    Name = "품절된 카드", 
-                    Rarity = rarity, 
-                    Price = ranPrice
-                };
-            }
-            return new OpartsData { 
-                ID = 000, 
-                Name = "품절된 오파츠", 
-                Rarity = rarity, 
-                Price = ranPrice
-            };
-        }
     }
 
     [RequireComponent(typeof(BlackMarketBtnController))]
@@ -220,6 +82,10 @@ namespace UI.BlackMarket
         [Header("Local User Data")]
         [SerializeField] [Tooltip("로컬 상의 플레이어 데이터")]
         private LocalUserDataBase _localUserData;
+
+        [Header("Databases")]
+        [SerializeField] [Tooltip("아이템 이미지 매핑 SO")]
+        private ItemIconDatabase _itemIconDatabase;
 
         [Header("Audio References")]
         [SerializeField] private string BGM_BLACKMARKET = "BGM_BlackMarket";
@@ -292,10 +158,20 @@ namespace UI.BlackMarket
                 Destroy(this);
             }
 
+            if (_itemIconDatabase != null) {
+                _itemIconDatabase.Initialize();
+            }
+            else {
+                Debug.LogError("ItemIconDatabaseSO가 할당되지 않았습니다");
+            }
+
             _prevItemIDs = new List<int>();
 
             _itemDatabase = new ItemDatabase();
             _itemsData = new List<ItemData>();
+
+            // 아이템 정보 파싱 로직이 완성되면 주석 해제
+            // _itemDatabase.Initialize(_itemIconDatabase);
 
             _btnController = GetComponent<BlackMarketBtnController>();
             _blackMarketCWController = GetComponent<CharacterWidgetController>();
@@ -326,6 +202,7 @@ namespace UI.BlackMarket
             _blackMarketUID.rootVisualElement.Add(_blackMarketRoot);
 
             _blackMarketCWController.Initialize(_blackMarketRoot);
+            _blackMarketCWController.OnCharacterClicked += HandleCharacterClick;
             _coinValue = _blackMarketRoot.Q<VisualElement>("Coin_Panel").Q<Label>("Value");
             _slotContainer = _blackMarketRoot.Q<VisualElement>("Item_Grid_Container");
             _btnRefresh = _blackMarketRoot.Q<Button>("Btn_Refresh");
@@ -355,6 +232,23 @@ namespace UI.BlackMarket
             if (_blackMarketRoot != null) {
                 _blackMarketRoot.RemoveFromHierarchy(); // UI 제거
                 _blackMarketRoot = null;
+            }
+
+            if (_blackMarketCWController != null) {
+                _blackMarketCWController.OnCharacterClicked -= HandleCharacterClick;
+            }
+        }
+
+        private void HandleCharacterClick()
+        {
+            if (CurrentGold < 100) {
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", "돈도 없으면서 귀찮게 하지 마시죠.");
+            }
+            else if (CurMembershipLevel >= 2) {
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", "VIP 고객님, 원하시는 게 있으신가요?");
+            }
+            else {
+                _blackMarketCWController.ShowLine("블랙마켓 딜러", "더 좋은 물건 말씀이신가요?\n물건을 보시려면 돈을 내놓으시죠.");
             }
         }
 
@@ -449,8 +343,6 @@ namespace UI.BlackMarket
         /// <param name="currentMembershipFee">현재 판에서 지불한 멤버십 비용</param>
         private void Initialize(long curSavings, int startMembershipLevel)
         {
-            // _blackMarketCWController.SetCharacterImage(, .0f, .0f, 1.0f);
-
             CalculateSavingsEffect(curSavings);
             CalculateMembershipLevel(startMembershipLevel);
 
@@ -561,16 +453,14 @@ namespace UI.BlackMarket
             }
 
             // 저축으로 슬롯이 늘어났다면 UI 새롭게 추가
-            while (_slotList.Count < TotalSlotCount)
-            {
+            while (_slotList.Count < TotalSlotCount) {
                 VisualElement slot = _itemSlotUXML.Instantiate();
                 slot.name = $"ItemSlot_{_slotList.Count}";
                 _slotList.Add(slot);
                 _slotContainer.Add(slot);
             }
             // 인출로 슬롯이 줄어들었다면 잉여 UI 제거
-            while (_slotList.Count > TotalSlotCount)
-            {
+            while (_slotList.Count > TotalSlotCount) {
                 int lastIdx = _slotList.Count - 1;
                 _slotContainer.Remove(_slotList[lastIdx]);
                 _slotList.RemoveAt(lastIdx);
@@ -668,15 +558,15 @@ namespace UI.BlackMarket
                 Label nameLabel = slot.Q<Label>("Lbl_ItemName");
                 Label priceLabel = slot.Q<Label>("Lbl_ItemPrice");
                 VisualElement iconElement = slot.Q<VisualElement>("Img_ItemIcon");
-                VisualElement rarityBackground = slot.Q<VisualElement>("RarityBackground"); // 희귀도용 배경 테두리가 있다면
+                VisualElement rarityBackground = slot.Q<VisualElement>("RarityBackground");
 
                 // 텍스트 데이터 바인딩
                 if (nameLabel != null) nameLabel.text = itemData.Name;
                 if (priceLabel != null) priceLabel.text = itemData.Price.ToString("N0"); // 10^3 단위로 콤마 찍기
 
                 // Sprite 이미지 바인딩
-                if (iconElement != null && itemData.Image != null) {
-                    iconElement.style.backgroundImage = new StyleBackground(itemData.Image);
+                if (iconElement != null) {
+                    iconElement.SetImage(itemData.Image, itemData.OffsetX, itemData.OffsetY, itemData.Scale);
                 }
 
                 // 희귀도(Rarity)에 따른 시각적 피드백
@@ -779,9 +669,7 @@ namespace UI.BlackMarket
 
             if (popupName != null) popupName.text = item.Name;
             if (popupPrice != null) popupPrice.text = item.Price.ToString("N0");
-            if (popupIcon != null && item.Image != null) {
-                popupIcon.style.backgroundImage = new StyleBackground(item.Image);
-            }
+            if (popupIcon != null) popupIcon.SetImage(item.Image, item.OffsetX, item.OffsetY, item.Scale);
             if (popupBackground != null) {
                 popupBackground.style.borderBottomColor = GetRarityColor(item.Rarity);
                 popupBackground.style.borderLeftColor = GetRarityColor(item.Rarity);
@@ -976,6 +864,7 @@ namespace UI.BlackMarket
             if (_lblTotalSavings != null) _lblTotalSavings.text = $"{Savings.ToString("N0")} G";
         }
 
+        // <----- 멤버십 기능 ----->
         public void OpenMembershipPopup()
         {
             if (_membershipRoot == null) return;

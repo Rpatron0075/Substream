@@ -3,7 +3,7 @@ using UnityEngine.UIElements;
 namespace UI.Utils
 {
     /// <summary>
-    /// VisualElement 클래스의 확장 메서드
+    /// VisualElement의 페이드 인앤 아웃을 제어함
     /// </summary>
     public static class PopupController
     {
