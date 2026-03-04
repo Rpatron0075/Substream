@@ -1,116 +1,123 @@
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UI.Utils;
 
-public class CharacterWidgetController : MonoBehaviour
+namespace Utils
 {
-    [Header("이미지 컨트롤러")]
-    public Sprite CharacterSprite;
-    public int SpriteOffsetX;
-    public int SpriteOffsetY;
-    public int SpriteScaleRatio;
-
-    [Header("UI Element 이름")]
-    [SerializeField] private string CHAR_BUTTON = "LD_Button";
-    [SerializeField] private string CHAR_IMAGE = "LD_Character_image";
-    [SerializeField] private string SPEECH_BUBBLE = "Line_Window";
-    [SerializeField] private string SPEAKER_NAME = "Lbl_SpeakerName";
-    [SerializeField] private string SPEECH_TXT = "Lbl_LineText";
-
-    public Action OnCharacterClicked;
-
-    // -- 런타임 변수 --
-    private VisualElement _characterArea;
-    private Button _characterButton;
-    private VisualElement _lineWindow;
-    private Label _lblSpeakerName;
-    private Label _lblLine;
-
-    private const string POPUP_CLASS = "line_window-popup";
-
-    void OnEnable()
+    public class CharacterWidgetController : MonoBehaviour
     {
-        var uiDocument = GetComponent<UIDocument>();
-        if (uiDocument != null) Initialize(uiDocument.rootVisualElement);
-    }
+        [Header("이미지 컨트롤러")]
+        public Sprite CharacterSprite;
+        public int SpriteOffsetX;
+        public int SpriteOffsetY;
+        public int SpriteScaleRatio;
 
-    void OnDisable()
-    {
-        if (_characterButton != null) _characterButton.UnregisterCallback<ClickEvent>(OnPopupLine);
-        if (_lineWindow != null) _lineWindow.UnregisterCallback<TransitionEndEvent>(OnTransitionEnd);
-    }
+        [Header("UI Element 이름")]
+        [SerializeField] private string CHAR_BUTTON = "LD_Button";
+        [SerializeField] private string CHAR_IMAGE = "LD_Character_image";
+        [SerializeField] private string SPEECH_BUBBLE = "Line_Window";
+        [SerializeField] private string SPEAKER_NAME = "Lbl_SpeakerName";
+        [SerializeField] private string SPEECH_TXT = "Lbl_LineText";
 
-    public void Initialize(VisualElement root)
-    {
-        _characterButton = root.Q<Button>(CHAR_BUTTON);
-        _characterArea = root.Q<VisualElement>(CHAR_IMAGE);
+        public Action OnCharacterClicked;
 
-        _lineWindow = root.Q<VisualElement>(SPEECH_BUBBLE);
-        _lblSpeakerName = root.Q<Label>(SPEAKER_NAME);
-        _lblLine = root.Q<Label>(SPEECH_TXT);
+        // -- 런타임 변수 --
+        private VisualElement _characterArea;
+        private Button _characterButton;
+        private VisualElement _lineWindow;
+        private Label _lblSpeakerName;
+        private Label _lblLine;
 
-        if (_characterButton != null)
-            _characterButton.RegisterCallback<ClickEvent>(OnPopupLine);
+        private const string POPUP_CLASS = "line_window-popup";
 
-        if (_lineWindow != null) {
-            _lineWindow.style.display = DisplayStyle.None;
-            _lineWindow.RegisterCallback<TransitionEndEvent>(OnTransitionEnd);
+        void OnEnable()
+        {
+            var uiDocument = GetComponent<UIDocument>();
+            if (uiDocument != null) Initialize(uiDocument.rootVisualElement);
         }
 
-        SetupCharacterImage();
-    }
-
-    private void SetupCharacterImage()
-    {
-        if (_characterArea != null && CharacterSprite != null) {
-            _characterArea.SetImage(CharacterSprite, SpriteOffsetX, SpriteOffsetY, SpriteScaleRatio);
+        void OnDisable()
+        {
+            if (_characterButton != null) _characterButton.UnregisterCallback<ClickEvent>(OnPopupLine);
+            if (_lineWindow != null) _lineWindow.UnregisterCallback<TransitionEndEvent>(OnTransitionEnd);
         }
-    }
 
-    public void ShowLine(string speaker, string lineTxt)
-    {
-        if (_lblSpeakerName != null && _lblLine != null) {
-            _lblSpeakerName.text = speaker;
-            _lblLine.text = lineTxt;
+        public void Initialize(VisualElement root)
+        {
+            _characterButton = root.Q<Button>(CHAR_BUTTON);
+            _characterArea = root.Q<VisualElement>(CHAR_IMAGE);
+
+            _lineWindow = root.Q<VisualElement>(SPEECH_BUBBLE);
+            _lblSpeakerName = root.Q<Label>(SPEAKER_NAME);
+            _lblLine = root.Q<Label>(SPEECH_TXT);
+
+            if (_characterButton != null)
+                _characterButton.RegisterCallback<ClickEvent>(OnPopupLine);
+
+            if (_lineWindow != null)
+            {
+                _lineWindow.style.display = DisplayStyle.None;
+                _lineWindow.RegisterCallback<TransitionEndEvent>(OnTransitionEnd);
+            }
+
+            SetupCharacterImage();
         }
-        OnPopup();
-    }
 
-    private void OnPopupLine(ClickEvent evt)
-    {
-        OnCharacterClicked?.Invoke();
-    }
+        private void SetupCharacterImage()
+        {
+            if (_characterArea != null && CharacterSprite != null)
+            {
+                _characterArea.SetImage(CharacterSprite, SpriteOffsetX, SpriteOffsetY, SpriteScaleRatio);
+            }
+        }
 
-    private void OnPopup()
-    {
-        if (_lineWindow == null) return;
+        public void ShowLine(string speaker, string lineTxt)
+        {
+            if (_lblSpeakerName != null && _lblLine != null)
+            {
+                _lblSpeakerName.text = speaker;
+                _lblLine.text = lineTxt;
+            }
+            OnPopup();
+        }
 
-        CancelInvoke(nameof(OnPopdownLine));
+        private void OnPopupLine(ClickEvent evt)
+        {
+            OnCharacterClicked?.Invoke();
+        }
 
-        _lineWindow.style.display = DisplayStyle.Flex;
+        private void OnPopup()
+        {
+            if (_lineWindow == null) return;
 
-        _lineWindow.schedule.Execute(() => {
-            _lineWindow.AddToClassList(POPUP_CLASS);
-        }).StartingIn(1);
+            CancelInvoke(nameof(OnPopdownLine));
 
-        Invoke(nameof(OnPopdownLine), 5f);
-    }
+            _lineWindow.style.display = DisplayStyle.Flex;
 
-    private void OnPopdownLine()
-    {
-        if (_lineWindow != null)
-            _lineWindow.RemoveFromClassList(POPUP_CLASS);
-    }
+            _lineWindow.schedule.Execute(() =>
+            {
+                _lineWindow.AddToClassList(POPUP_CLASS);
+            }).StartingIn(1);
 
-    /// <summary>
-    /// 애니메이션 종료 시점에 이동이 끝난 UI를 비활성화 하도록 제어함
-    /// </summary>
-    /// <param name="evt">UI 이동 종료 이벤트</param>
-    private void OnTransitionEnd(TransitionEndEvent evt)
-    {
-        if (_lineWindow != null && !_lineWindow.ClassListContains(POPUP_CLASS)) {
-            _lineWindow.style.display = DisplayStyle.None;
+            Invoke(nameof(OnPopdownLine), 5f);
+        }
+
+        private void OnPopdownLine()
+        {
+            if (_lineWindow != null)
+                _lineWindow.RemoveFromClassList(POPUP_CLASS);
+        }
+
+        /// <summary>
+        /// 애니메이션 종료 시점에 이동이 끝난 UI를 비활성화 하도록 제어함
+        /// </summary>
+        /// <param name="evt">UI 이동 종료 이벤트</param>
+        private void OnTransitionEnd(TransitionEndEvent evt)
+        {
+            if (_lineWindow != null && !_lineWindow.ClassListContains(POPUP_CLASS))
+            {
+                _lineWindow.style.display = DisplayStyle.None;
+            }
         }
     }
 }

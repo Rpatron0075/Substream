@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace UI.Utils
+namespace Utils
 {
     /// <summary>
     /// Sprite의 삽입, 위치 조정, 크기 조정을 제어함

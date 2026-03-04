@@ -226,6 +226,9 @@ GameObject:
   - component: {fileID: 155224127}
   - component: {fileID: 155224128}
   - component: {fileID: 155224129}
+  - component: {fileID: 155224130}
+  - component: {fileID: 155224131}
+  - component: {fileID: 155224132}
   m_Layer: 5
   m_Name: UID_BlackMarket_DummyNodeMap
   m_TagString: Untagged
@@ -335,6 +338,11 @@ MonoBehaviour:
     RareWeight: 40
     UniqueWeight: 50
     LegendaryWeight: 30
+  - Name: "4\uB2E8\uACC4"
+    CommonWeight: 20
+    RareWeight: 30
+    UniqueWeight: 50
+    LegendaryWeight: 35
   _baseSlotCount: 6
   _localUserData:
     LocalUserList: []
@@ -343,14 +351,6 @@ MonoBehaviour:
   SFX_DOORBELL: SFX_Doorbell
   SFX_DOOR: SFX_Door
   SFX_COIN: SFX_Coin
-  SFX_OPENSLOT: SFX_OpenSlot
-  VO_ENTER: VO_Enter
-  VO_BUY_1: VO_Buy_1
-  VO_BUY_2: VO_Buy_2
-  VO_DISABLED: VO_Disabled
-  VO_LOCKED: VO_Locked
-  VO_REFRESH: VO_Refresh
-  VO_EXIT: VO_Exit
 --- !u!114 &155224127
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -387,15 +387,8 @@ MonoBehaviour:
   _exitBtnName: Btn_Exit
   _refreshBtnName: Btn_Refresh
   _settingBtnName: Btn_Setting
-  _buyBtnName: Btn_Buy
-  _cancelBtnName: Btn_Cancel
   _savingsBtnName: Btn_Savings
-  _depositBtnName: Btn_Deposit
-  _withdrawBtnName: Btn_Withdraw
-  _closeSavingsBtnName: Btn_CloseSavings
   _membershipBtnName: Btn_Membership
-  _upgradeMembershipBtnName: Btn_UpgradeMembership
-  _closeMembershipBtnName: Btn_CloseMembership
 --- !u!114 &155224129
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -409,6 +402,43 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _enterButtonName: Button
+--- !u!114 &155224130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 155224123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe601a430f3fad84eb421be38abf5ac6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SFX_OPENSLOT: SFX_OpenSlot
+--- !u!114 &155224131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 155224123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e712611f9e12514d8f5992eb415e403, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &155224132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 155224123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df92aa9fc8551094495b422b420b06d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &654985393
 GameObject:
   m_ObjectHideFlags: 0
@@ -948,7 +978,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1476225269}
+  - component: {fileID: 1476225271}
   - component: {fileID: 1476225268}
+  - component: {fileID: 1476225270}
   m_Layer: 0
   m_Name: SettingManager
   m_TagString: Untagged
@@ -992,6 +1024,33 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1476225270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1476225267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29988a6c16fdd93479c007b21a17727f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _languageDropdownName: Dropdown_Language
+--- !u!114 &1476225271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1476225267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33caf14513cd06b4993b944bf1021fcd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _audioPageUXML: {fileID: 9197481963319205126, guid: 33e14698a4ed47a4ca1cd985b0e62e1a, type: 3}
+  _languagePageUXML: {fileID: 9197481963319205126, guid: 542b592324e213a499a237ba2b7418cd, type: 3}
 --- !u!1 &1558286379
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 namespace Item
 {
@@ -9,52 +10,146 @@ namespace Item
         Common,
         Rare,
         Unique,
-        Legendary
+        Legendary, 
+        None, 
+    }
+
+    public enum ItemType
+    {
+        None, 
+        Oparts, 
+        Card, 
     }
 
     [System.Serializable]
-    class ItemData
+    public class ItemData
     {
         public int ID;
         public string Name;
         public ItemRarity Rarity;
         public int Price;
         public string Info;
+
         public Sprite Image;
+
         public int OffsetX;
         public int OffsetY;
         public float Scale;
     }
 
-    class CardData : ItemData
+    public class CardData : ItemData
     {
+        /// <summary>
+        /// 카드 소유자의 ID
+        /// </summary>
         public int OwnerCharacterID;
     }
 
-    class OpartsData : ItemData
+    public class OpartsData : ItemData
     {
+        /// <summary>
+        /// 소지 중복 여부
+        /// </summary>
         public bool CanAppearShop;
     }
     #endregion
 
     class ItemDatabase
     {
+        // --- 멤버 변수 ---
         private ItemIconDatabase _iconDB;
 
+        // --- 리스트 ---
         private List<ItemData> _masterItemDB = new List<ItemData>();
         private List<CardData> _curCardPool = new List<CardData>();
         private List<OpartsData> _curOpartsPool = new List<OpartsData>();
         private List<int> _excludeItemIDs = new List<int>();
 
+        // --- 상수 선언 ---
+        const int DUMMY_ITEM_ID = 9999;
+
+        /// <summary>
+        /// 아이템 정보를 파싱하며 이미지 데이터를 연결함
+        /// </summary>
+        /// <param name="iconDB"></param>
         public void Initialize(ItemIconDatabase iconDB)
         {
             _iconDB = iconDB;
 
-            // >> 여기서 아이템을 파싱해야 한다 <<
-
+            LoadDataFromCSVReader();
             MapAllImagesToMasterDB();
         }
 
+        /// <summary>
+        /// CSVReader >> 블랙마켓에서 필요한 아이템 데이터를 파싱하고 마스터 Item DB를 채움
+        /// </summary>
+        private void LoadDataFromCSVReader()
+        {
+            _masterItemDB.Clear();
+
+            List<Dictionary<string, object>> itemDataList = CSVReader.Read("ItemSlotTable");
+            if (itemDataList == null || itemDataList.Count == 0) {
+                Debug.LogError("[ItemDatabase] ItemTable.csv 데이터를 불러올 수 없습니다");
+                return;
+            }
+
+            foreach (var row in itemDataList) {
+                if (!row.ContainsKey("ID") || !row.ContainsKey("Type")) continue;
+
+                // 공통 속성 파싱
+                int id = Convert.ToInt32(row["ID"]);
+                string typeStr = row["Type"].ToString();
+
+                string name = row.ContainsKey("Name") ? row["Name"].ToString() : "";
+                ItemRarity rarity = (System.Enum.TryParse<ItemRarity>(row["Rarity"].ToString(), true, out ItemRarity parsedRarity)) ? parsedRarity : ItemRarity.None;
+                int price = row.ContainsKey("Price") ? Convert.ToInt32(row["Price"]) : 0;
+                string info = row.ContainsKey("Info") ? row["Info"].ToString() : "";
+                int offsetX = row.ContainsKey("OffsetX") ? Convert.ToInt32(row["OffsetX"]) : 0;
+                int offsetY = row.ContainsKey("OffsetY") ? Convert.ToInt32(row["OffsetY"]) : 0;
+                float scale = row.ContainsKey("Scale") ? Convert.ToSingle(row["Scale"]) : 1f;
+
+                ItemData newItem = null;
+
+                if (typeStr == "Card") {
+                    newItem = new CardData {
+                        ID = id,
+                        Name = name,
+                        Rarity = rarity,
+                        Price = price,
+                        Info = info,
+                        OffsetX = offsetX,
+                        OffsetY = offsetY,
+                        Scale = scale,
+
+                        OwnerCharacterID = row.ContainsKey("OwnerCharacterID") ? Convert.ToInt32(row["OwnerCharacterID"]) : 0
+                    };
+                }
+                else if (typeStr == "Oparts") {
+                    newItem = new OpartsData {
+                        ID = id,
+                        Name = name,
+                        Rarity = rarity,
+                        Price = price,
+                        Info = info,
+                        OffsetX = offsetX,
+                        OffsetY = offsetY,
+                        Scale = scale,
+
+                        CanAppearShop = true
+                    };
+                }
+                else {
+                    Debug.LogWarning($"[ItemDatabase] 알 수 없는 아이템 타입입니다: {typeStr} (ID: {id})");
+                    continue;
+                }
+                _masterItemDB.Add(newItem);
+            }
+            Debug.Log($"[ItemDatabase] CSVReader 파싱 완료 (총 {_masterItemDB.Count}개 아이템 로드됨)");
+        }
+
+        /// <summary>
+        ///  SO에 저장된 이미지를 ID를 통해 매핑
+        /// </summary>
         private void MapAllImagesToMasterDB()
         {
             if (_iconDB == null) {
@@ -77,37 +172,35 @@ namespace Item
             _curCardPool.Clear();
             _curOpartsPool.Clear();
 
-            foreach (var item in _masterItemDB)
-            {
+            foreach (var item in _masterItemDB) {
                 // 새로고침 시, 직전 아이템들은 제외됨
                 if (_excludeItemIDs != null && _excludeItemIDs.Contains(item.ID)) { continue; }
 
-                if (item is CardData card)
-                {
+                if (item is CardData card) {
                     // 파티 내 캐릭터의 ID와 일치하는 카드만 추가
-                    if (partyCharacterIDs.Contains(card.OwnerCharacterID))
-                    {
+                    if (partyCharacterIDs.Contains(card.OwnerCharacterID)) {
                         _curCardPool.Add(card);
                     }
                 }
-                else if (item is OpartsData oparts)
-                {
+                else if (item is OpartsData oparts) {
                     // 상점 등장 가능한 오파츠이면서, 현재 보유 중이 아닌 경우만 추가
-                    if (oparts.CanAppearShop && !ownedOpartsIDs.Contains(oparts.ID))
-                    {
+                    if (oparts.CanAppearShop && !ownedOpartsIDs.Contains(oparts.ID)) {
                         _curOpartsPool.Add(oparts);
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// 플레이어가 블랙마켓을 통해 얻지 말아야 할 아이템 ID 값을 전달함
+        /// </summary>
+        /// <param name="ids"></param>
         public void SetExcludeItemIDs(List<int> ids)
         {
             _excludeItemIDs.Clear();
-            if (ids != null)
-            {
-                _excludeItemIDs.AddRange(ids);
-            }
+            if (ids == null) { return; }
+
+            _excludeItemIDs.AddRange(ids);
         }
 
         /// <summary>
@@ -118,12 +211,10 @@ namespace Item
         /// <returns>아이템 데이터</returns>
         public ItemData GetRandomItem(System.Type type, ItemRarity rarity)
         {
-            if (type == typeof(CardData))
-            {
+            if (type == typeof(CardData)) {
                 return ExtractItem(_curCardPool, rarity, type);
             }
-            else if (type == typeof(OpartsData))
-            {
+            else if (type == typeof(OpartsData)) {
                 return ExtractItem(_curOpartsPool, rarity, type);
             }
 
@@ -131,16 +222,22 @@ namespace Item
             return null;
         }
 
+        /// <summary>
+        /// 생성 가능한 아이템만 필터링하여 랜덤 반환
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="pool"></param>
+        /// <param name="rarity"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
         private ItemData ExtractItem<T>(List<T> pool, ItemRarity rarity, System.Type type) where T : ItemData
         {
             // 해당 희귀도의 아이템 필터링
             List<T> filteredItems = pool.FindAll(item => item.Rarity == rarity);
 
             // 해당 희귀도의 아이템이 소진되었을 경우의 예외 처리
-            if (filteredItems.Count == 0)
-            {
-                if (pool.Count == 0)
-                {
+            if (filteredItems.Count == 0) {
+                if (pool.Count == 0) {
                     Debug.LogWarning($"[{type.Name}]\n" +
                         $"  타입의 남은 아이템이 풀에 없습니다\n" +
                         $"  더미 아이템으로 대체됩니다\n");
@@ -151,7 +248,7 @@ namespace Item
                 filteredItems = pool;
             }
 
-            int ranIdx = Random.Range(0, filteredItems.Count);
+            int ranIdx = UnityEngine.Random.Range(0, filteredItems.Count);
             T selectedItem = filteredItems[ranIdx];
 
             // 상점 내 중복 등장 방지를 위해 풀에서 즉시 제거
@@ -162,13 +259,11 @@ namespace Item
 
         private ItemData GetDummyItem(System.Type type, ItemRarity rarity)
         {
-            int ranPrice = Random.Range(100, 80000);
-            int dummyID = 000;
+            int ranPrice = UnityEngine.Random.Range(100, 80000);
+            int dummyID = DUMMY_ITEM_ID;
 
-            if (type == typeof(CardData))
-            {
-                return new CardData
-                {
+            if (type == typeof(CardData)) {
+                return new CardData {
                     ID = dummyID,
                     Name = "품절된 카드",
                     Rarity = rarity,
@@ -179,8 +274,7 @@ namespace Item
                     Scale = 1f,
                 };
             }
-            return new OpartsData
-            {
+            return new OpartsData {
                 ID = dummyID,
                 Name = "품절된 오파츠",
                 Rarity = rarity,

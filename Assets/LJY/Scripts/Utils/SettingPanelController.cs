@@ -1,121 +1,147 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Audio.Data;
 
-namespace UI.Utils
+namespace Utils
 {
-    /// <summary>
-    /// 오디오 설정을 제어함
-    /// </summary>
     public class SettingPanelController : MonoBehaviour
     {
         public static SettingPanelController Instance { get; private set; }
 
-        [Header("세팅 데이터")]
-        [SerializeField] private AudioSettingsSO _audioSettings;
+        [Header("UXML References")]
+        [SerializeField] private VisualTreeAsset _audioPageUXML;
+        [SerializeField] private VisualTreeAsset _languagePageUXML;
 
-        [Header("뮤트 Toggles 이름")]
-        [SerializeField] private string _marsterTgl = "Tgl_Master";
-        [SerializeField] private string _bgmTgl = "Tgl_BGM";
-        [SerializeField] private string _sfxTgl = "Tgl_SFX";
-        [SerializeField] private string _voTgl = "Tgl_VO";
+        private VisualElement _settingRoot;
+        private VisualElement _pagesContainer;
+        private Button _btnClose;
 
-        [Header("볼륨 Sliders 이름")]
-        [SerializeField] private string _masterSld = "Sld_Master";
-        [SerializeField] private string _bgmSld = "Sld_BGM";
-        [SerializeField] private string _sfxSld = "Sld_SFX";
-        [SerializeField] private string _voSld = "Sld_VO";
+        // -- 런타임 변수 --
+        private Dictionary<Button, VisualElement> _tabPages = new Dictionary<Button, VisualElement>();
+        private Button _currentActiveTab;
 
-        // -- Toggles --
-        private Toggle _tglMaster;
-        private Toggle _tglBGM;
-        private Toggle _tglSFX;
-        private Toggle _tglVO;
-
-        // -- Sliders --
-        private Slider _sldMaster;
-        private Slider _sldBGM;
-        private Slider _sldSFX;
-        private Slider _sldVO;
+        // -- 스타일 상수 (선택된 탭과 아닌 탭의 배경색) --
+        private readonly StyleColor COLOR_TAB_ACTIVE = new StyleColor(new Color32(80, 80, 80, 255));
+        private readonly StyleColor COLOR_TAB_INACTIVE = new StyleColor(Color.clear);
+        private readonly StyleColor COLOR_TEXT_ACTIVE = new StyleColor(Color.white);
+        private readonly StyleColor COLOR_TEXT_INACTIVE = new StyleColor(new Color32(200, 200, 200, 255));
 
         private void Awake()
         {
             if (Instance == null) {
                 Instance = this;
-                DontDestroyOnLoad(gameObject);
+                return;
             }
-            else {
-                Destroy(this);
+
+            Destroy(gameObject);
+        }
+
+        /// <summary>
+        /// 생성한 세팅 루트 UI를 연결받아 내부 요소들을 초기화
+        /// </summary>
+        public void ConnectSettingUI(VisualElement root)
+        {
+            _settingRoot = root;
+
+            // 공통 닫기 버튼
+            _btnClose = _settingRoot.Q<Button>("Btn_CloseSetting");
+            if (_btnClose != null) {
+                _btnClose.clicked -= ClosePanel;
+                _btnClose.clicked += ClosePanel;
+            }
+
+            // 페이지 컨테이너
+            _pagesContainer = _settingRoot.Q<VisualElement>("Pages_Container");
+            if (_pagesContainer == null) {
+                Debug.LogError("Pages_Container를 찾을 수 없습니다.");
+                return;
+            }
+
+            // 페이지 주입 및 탭 초기화
+            InitializeTabsAndPages();
+        }
+
+        private void InitializeTabsAndPages()
+        {
+            _tabPages.Clear();
+
+            // 오디오 페이지 설정 및 AudioSetter 연결
+            if (_audioPageUXML != null) {
+                VisualElement audioPage = _audioPageUXML.Instantiate().Q("Page_Audio");
+                _pagesContainer.Add(audioPage);
+
+                Button tabAudio = _settingRoot.Q<Button>("Tab_Audio");
+                RegisterTab(tabAudio, audioPage);
+
+                if (AudioSetter.Instance != null) {
+                    AudioSetter.Instance.ConnectSettingUI(audioPage);
+                }
+            }
+
+            // 언어 페이지 설정 및 LanguageSetter 연결
+            if (_languagePageUXML != null) {
+                VisualElement languagePage = _languagePageUXML.Instantiate().Q("Page_Language");
+                _pagesContainer.Add(languagePage);
+
+                Button tabLanguage = _settingRoot.Q<Button>("Tab_Language");
+                RegisterTab(tabLanguage, languagePage);
+
+                if (LanguageSetter.Instance != null) {
+                    LanguageSetter.Instance.ConnectSettingUI(languagePage);
+                }
+            }
+
+            // 오디오 탭을 기본으로 설정
+            if (_settingRoot.Q<Button>("Tab_Audio") != null) {
+                SelectTab(_settingRoot.Q<Button>("Tab_Audio"));
             }
         }
 
         /// <summary>
-        /// 세팅 패널과 연결
+        /// 책갈피 버튼에 세팅 관련 버튼 이벤트 등록 및 UI 저장
         /// </summary>
-        /// <param name="root">세팅 패널 UI Root</param>
-        public void ConnectSettingUI(VisualElement root)
+        /// <param name="tabBtn">각 UI 활성화 버튼</param>
+        /// <param name="page">활성화 될 탭 UI</param>
+        private void RegisterTab(Button tabBtn, VisualElement page)
         {
-            if (_audioSettings == null) {
-                Debug.LogWarning("AudioSettingsSO가 할당되지 않았습니다");
-                return;
-            }
+            if (tabBtn == null || page == null) return;
 
-            _tglMaster = root.Q<Toggle>(_marsterTgl);
-            _tglBGM = root.Q<Toggle>(_bgmTgl);
-            _tglSFX = root.Q<Toggle>(_sfxTgl);
-            _tglVO = root.Q<Toggle>(_voTgl);
-
-            _sldMaster = root.Q<Slider>(_masterSld);
-            _sldBGM = root.Q<Slider>(_bgmSld);
-            _sldSFX = root.Q<Slider>(_sfxSld);
-            _sldVO = root.Q<Slider>(_voSld);
-
-            // 초기값 덮어씌우기 (SO 데이터 >> UI 반영)
-            if (_tglMaster != null) _tglMaster.value = _audioSettings.isMasterOn;
-            if (_tglBGM != null) _tglBGM.value = _audioSettings.isBgmOn;
-            if (_tglSFX != null) _tglSFX.value = _audioSettings.isSfxOn;
-            if (_tglVO != null) _tglVO.value = _audioSettings.isVoOn;
-
-            if (_sldMaster != null) _sldMaster.value = _audioSettings.masterVolume;
-            if (_sldBGM != null) _sldBGM.value = _audioSettings.bgmVolume;
-            if (_sldSFX != null) _sldSFX.value = _audioSettings.sfxVolume;
-            if (_sldVO != null) _sldVO.value = _audioSettings.voVolume;
-
-            // 토글 이벤트 등록 (UI 변경 >> SO 반영)
-            _tglMaster?.RegisterValueChangedCallback(evt => {
-                _audioSettings.isMasterOn = evt.newValue;
-                _audioSettings.ApplyChanges();
-            });
-            _tglBGM?.RegisterValueChangedCallback(evt => {
-                _audioSettings.isBgmOn = evt.newValue;
-                _audioSettings.ApplyChanges();
-            });
-            _tglSFX?.RegisterValueChangedCallback(evt => {
-                _audioSettings.isSfxOn = evt.newValue;
-                _audioSettings.ApplyChanges();
-            });
-            _tglVO?.RegisterValueChangedCallback(evt => {
-                _audioSettings.isVoOn = evt.newValue;
-                _audioSettings.ApplyChanges();
-            });
-
-            // 슬라이더 이벤트 등록 (UI 변경 >> SO 반영)
-            _sldMaster?.RegisterValueChangedCallback(evt => {
-                _audioSettings.masterVolume = evt.newValue;
-                _audioSettings.ApplyChanges();
-            });
-            _sldBGM?.RegisterValueChangedCallback(evt => {
-                _audioSettings.bgmVolume = evt.newValue;
-                _audioSettings.ApplyChanges();
-            });
-            _sldSFX?.RegisterValueChangedCallback(evt => {
-                _audioSettings.sfxVolume = evt.newValue;
-                _audioSettings.ApplyChanges();
-            });
-            _sldVO?.RegisterValueChangedCallback(evt => {
-                _audioSettings.voVolume = evt.newValue;
-                _audioSettings.ApplyChanges();
-            });
+            // 클릭 이벤트 등록
+            tabBtn.clicked += () => SelectTab(tabBtn);
+            _tabPages.Add(tabBtn, page);
         }
+
+        private void SelectTab(Button selectedTab)
+        {
+            if (selectedTab == _currentActiveTab) return;
+
+            foreach (var kvp in _tabPages) {
+                Button btn = kvp.Key;
+                VisualElement page = kvp.Value;
+
+                if (btn == selectedTab) {
+                    // 활성화 처리
+                    page.style.display = DisplayStyle.Flex;
+                    btn.style.backgroundColor = COLOR_TAB_ACTIVE;
+                    btn.style.color = COLOR_TEXT_ACTIVE;
+                    _currentActiveTab = selectedTab;
+                }
+                else {
+                    // 비활성화 처리
+                    page.style.display = DisplayStyle.None;
+                    btn.style.backgroundColor = COLOR_TAB_INACTIVE;
+                    btn.style.color = COLOR_TEXT_INACTIVE;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 세팅 패널 열기
+        /// </summary>
+        public void OpenPanel() => _settingRoot?.ShowPopupFade();
+        /// <summary>
+        /// 세팅 패널 닫기
+        /// </summary>
+        public void ClosePanel() => _settingRoot?.HidePopupFade();
     }
 }

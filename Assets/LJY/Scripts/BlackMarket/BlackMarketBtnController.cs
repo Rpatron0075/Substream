@@ -1,70 +1,61 @@
+using Localization;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Audio.Controller;
+using Utils;
 
-namespace UI.BlackMarket
+namespace BlackMarket
 {
     /// <summary>
-    /// 나가기 버튼, 새로고침 버튼, 아이템 버튼 클릭 및 호버링 연결
+    /// 블랙마켓 메인기능과 연결된 버튼 컨트롤러
     /// </summary>
     public class BlackMarketBtnController : MonoBehaviour
     {
-        [Header("메인 기능")]
-        [SerializeField] private string _exitBtnName;
-        [SerializeField] private string _refreshBtnName;
-        [SerializeField] private string _settingBtnName;
-
-        [Header("자세히 보기 기능")]
-        [SerializeField] private string _buyBtnName;
-        [SerializeField] private string _cancelBtnName;
-
-        [Header("저축 기능")]
-        [SerializeField] private string _savingsBtnName;
-        [SerializeField] private string _depositBtnName;
-        [SerializeField] private string _withdrawBtnName;
-        [SerializeField] private string _closeSavingsBtnName;
-
-        [Header("멤버십 기능")]
-        [SerializeField] private string _membershipBtnName = "Btn_Membership";
-        [SerializeField] private string _upgradeMembershipBtnName = "Btn_UpgradeMembership";
-        [SerializeField] private string _closeMembershipBtnName = "Btn_CloseMembership";
+        [Header("버튼 이름")]
+        [SerializeField][Tooltip("블랙마켓 퇴장 버튼")] private string _exitBtnName;
+        [SerializeField][Tooltip("상품 초기화 버튼")] private string _refreshBtnName;
+        [SerializeField][Tooltip("세팅 창 열기 버튼")] private string _settingBtnName;
+        [SerializeField][Tooltip("저축 창 열기 버튼")] private string _savingsBtnName;
+        [SerializeField][Tooltip("멤버십 창 열기 버튼")] private string _membershipBtnName = "Btn_Membership";
 
         // ------------------------------------
         private Button _exitBtn;
         private Button _refreshBtn;
         private Button _settingBtn;
-
-        private Button _buyBtn;
-        private Button _cancelBtn;
-
         private Button _savingsBtn;
-        private Button _depositBtn;
-        private Button _withdrawBtn;
-        private Button _closeSavingsBtn;
-
         private Button _membershipBtn;
-        private Button _upgradeMembershipBtn;
-        private Button _closeMembershipBtn;
 
         // ------------------------------------
+        public void OnEnable()
+        {
+            // 다국어 변경 이벤트
+            LocalizationManager.OnLanguageChanged += OnLanguageChanged;
+        }
 
         public void OnDisable()
         {
             if (_exitBtn != null) { _exitBtn.clicked -= OnClickExit; }
             if (_refreshBtn != null) { _refreshBtn.clicked -= OnRefreshSlots; }
             if (_settingBtn != null) { _settingBtn.clicked -= OnPopUpSettingPanel; }
-
-            if (_buyBtn != null) { _buyBtn.clicked -= OnClickBuy; }
-            if (_cancelBtn != null) { _cancelBtn.clicked -= OnClickCancelPopup; }
-
             if (_savingsBtn != null) { _savingsBtn.clicked -= OnClickOpenSavings; }
-            if (_depositBtn != null) { _depositBtn.clicked -= OnClickDeposit; _depositBtn = null; }
-            if (_withdrawBtn != null) { _withdrawBtn.clicked -= OnClickWithdraw; _withdrawBtn = null; }
-            if (_closeSavingsBtn != null) { _closeSavingsBtn.clicked -= OnClickCloseSavings; _closeSavingsBtn = null; }
+            if (_membershipBtn != null) { _membershipBtn.clicked -= OnClickOpenMembership; }
 
-            if (_membershipBtn != null) { _membershipBtn.clicked -= OnClickOpenMembership; _membershipBtn = null; }
-            if (_upgradeMembershipBtn != null) { _upgradeMembershipBtn.clicked -= OnClickUpgradeMembership; _upgradeMembershipBtn = null; }
-            if (_closeMembershipBtn != null) { _closeMembershipBtn.clicked -= OnClickCloseMembership; _closeMembershipBtn = null; }
+            LocalizationManager.OnLanguageChanged -= OnLanguageChanged;
+        }
+
+        /// <summary>
+        /// 언어가 변경되었을 때 즉시 호출되어 동적 텍스트들을 다시 그림
+        /// </summary>
+        private void OnLanguageChanged(LanguageType newLanguage)
+        {
+            // 현재 Manager가 들고 있는 레벨 값을 가져와서 텍스트 UI 새로고침
+            if (BlackMarketManager.Instance == null) {
+                Debug.LogError("블랙마켓 매니저 미할당");
+                return;
+            }
+
+            UpdateMembershipBtnText(BlackMarketManager.Instance.CurMembershipLevel);
+            UpdateSavingsBtnText(BlackMarketManager.Instance.CurSavingsLevel);
+            BlackMarketManager.Instance.RefreshLocalization();
         }
 
         /// <summary>
@@ -96,50 +87,16 @@ namespace UI.BlackMarket
         }
 
         /// <summary>
-        /// 동적으로 생성된 구매 팝업의 버튼 이벤트를 연결
-        /// </summary>
-        public void ConnectPopupBtnEvt(VisualElement root)
-        {
-            _buyBtn = root.Q<Button>(_buyBtnName);
-            _cancelBtn = root.Q<Button>(_cancelBtnName);
-
-            if (_buyBtn != null) _buyBtn.clicked += OnClickBuy;
-            else Debug.LogWarning($"Popup Button '{_buyBtnName}' 를 찾을 수 없습니다");
-
-            if (_cancelBtn != null) _cancelBtn.clicked += OnClickCancelPopup;
-            else Debug.LogWarning($"Popup Button '{_cancelBtnName}' 를 찾을 수 없습니다");
-        }
-
-        public void ConnectSavingsBtnEvt(VisualElement root)
-        {
-            // 저축 팝업 버튼
-            _depositBtn = root.Q<Button>(_depositBtnName);
-            _withdrawBtn = root.Q<Button>(_withdrawBtnName);
-            _closeSavingsBtn = root.Q<Button>(_closeSavingsBtnName);
-
-
-            if (_depositBtn != null) _depositBtn.clicked += OnClickDeposit;
-            if (_withdrawBtn != null) _withdrawBtn.clicked += OnClickWithdraw;
-            if (_closeSavingsBtn != null) _closeSavingsBtn.clicked += OnClickCloseSavings;
-        }
-
-        public void ConnectMembershipBtnEvt(VisualElement root)
-        {
-            _upgradeMembershipBtn = root.Q<Button>(_upgradeMembershipBtnName);
-            _closeMembershipBtn = root.Q<Button>(_closeMembershipBtnName);
-
-            if (_upgradeMembershipBtn != null) _upgradeMembershipBtn.clicked += OnClickUpgradeMembership;
-            if (_closeMembershipBtn != null) _closeMembershipBtn.clicked += OnClickCloseMembership;
-        }
-
-        /// <summary>
         /// 메인 화면의 멤버십 버튼 텍스트 갱신
         /// </summary>
         public void UpdateMembershipBtnText(int level)
         {
-            if (_membershipBtn != null) {
-                _membershipBtn.text = $"멤버십 Lv.{level}";
+            if (_membershipBtn == null) {
+                Debug.LogWarning("멤버십 버튼을 찾을 수 없습니다");
+                return;
             }
+            string localizedText = LocalizationManager.GetText("UI_Membership_Lv");
+            _membershipBtn.text = $"{localizedText} {level}";
         }
 
         /// <summary>
@@ -147,26 +104,27 @@ namespace UI.BlackMarket
         /// </summary>
         public void UpdateSavingsBtnText(int level)
         {
-            if (_savingsBtn != null) {
-                _savingsBtn.text = $"저축 Lv.{level}";
+            if (_savingsBtn == null) {
+                Debug.LogWarning("저축 버튼을 찾을 수 없습니다");
+                return;
             }
+            string localizedText = LocalizationManager.GetText("UI_Savings_Lv");
+            _savingsBtn.text = $"{localizedText} {level}";
         }
 
         // ---- 이벤트 콜백 ----
         private void OnClickExit() => BlackMarketManager.Instance.CloseBlackMarket();
         private void OnRefreshSlots() => BlackMarketManager.Instance.HandleRefreshRequest();
-        private void OnPopUpSettingPanel() => BlackMarketManager.Instance.OpenSettingPanel();
+        private void OnPopUpSettingPanel() => SettingPanelController.Instance?.OpenPanel();
+        private void OnClickOpenSavings()
+        {
+            if (SavingsController.Instance == null) {
+                Debug.LogWarning("저축 컨트롤러 미 생성");
+                return;
+            }
 
-        private void OnClickBuy() => BlackMarketManager.Instance.ConfirmPurchase();
-        private void OnClickCancelPopup() => BlackMarketManager.Instance.ClosePurchasePopup();
-
-        private void OnClickOpenSavings() => BlackMarketManager.Instance.OpenSavingsPopup();
-        private void OnClickDeposit() => BlackMarketManager.Instance.RequestDeposit();
-        private void OnClickWithdraw() => BlackMarketManager.Instance.RequestWithdraw();
-        private void OnClickCloseSavings() => BlackMarketManager.Instance.CloseSavingsPopup();
-
+            SavingsController.Instance.OpenPopup(BlackMarketManager.Instance.CurSavingsLevel, BlackMarketManager.Instance.Savings);
+        }
         private void OnClickOpenMembership() => BlackMarketManager.Instance.OpenMembershipPopup();
-        private void OnClickUpgradeMembership() => BlackMarketManager.Instance.UpgradeMembership();
-        private void OnClickCloseMembership() => BlackMarketManager.Instance.CloseMembershipPopup();
     }
 }
