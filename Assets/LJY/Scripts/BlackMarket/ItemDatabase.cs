@@ -61,9 +61,16 @@ namespace Item
 
         // --- 리스트 ---
         private List<ItemData> _masterItemDB = new List<ItemData>();
-        private List<CardData> _curCardPool = new List<CardData>();
-        private List<OpartsData> _curOpartsPool = new List<OpartsData>();
         private List<int> _excludeItemIDs = new List<int>();
+
+        // FindAll은 호출마다 List 객체를 찍어내므로 GC를 부름
+        // 따라서 미리 분류하도록 최적화
+        private Dictionary<ItemRarity, List<CardData>> _cardPoolByRarity;
+        private Dictionary<ItemRarity, List<OpartsData>> _opartsPoolByRarity;
+
+        // 희귀도가 고갈되면 전체 탐색을 진행할 재사용 리스트
+        private List<CardData> _fallbackCardPool;
+        private List<OpartsData> _fallbackOpartsPool;
 
         // --- 상수 선언 ---
         const int DUMMY_ITEM_ID = 9999;
@@ -75,6 +82,15 @@ namespace Item
         public void Initialize(ItemIconDatabase iconDB)
         {
             _iconDB = iconDB;
+            _cardPoolByRarity = new Dictionary<ItemRarity, List<CardData>>();
+            _opartsPoolByRarity = new Dictionary<ItemRarity, List<OpartsData>>();
+            _fallbackCardPool = new List<CardData>();
+            _fallbackOpartsPool = new List<OpartsData>();
+
+            foreach (ItemRarity rarity in Enum.GetValues(typeof(ItemRarity))) {
+                _cardPoolByRarity[rarity] = new List<CardData>();
+                _opartsPoolByRarity[rarity] = new List<OpartsData>();
+            }
 
             LoadDataFromCSVReader();
             MapAllImagesToMasterDB();
@@ -169,24 +185,23 @@ namespace Item
         /// </summary>
         public void CreateItemPool(List<int> partyCharacterIDs, List<int> ownedOpartsIDs)
         {
-            _curCardPool.Clear();
-            _curOpartsPool.Clear();
+            foreach (var list in _cardPoolByRarity.Values) list.Clear();
+            foreach (var list in _opartsPoolByRarity.Values) list.Clear();
 
             foreach (var item in _masterItemDB) {
                 // 새로고침 시, 직전 아이템들은 제외됨
                 if (_excludeItemIDs != null && _excludeItemIDs.Contains(item.ID)) { continue; }
 
-                if (item is CardData card) {
-                    // 파티 내 캐릭터의 ID와 일치하는 카드만 추가
-                    if (partyCharacterIDs.Contains(card.OwnerCharacterID)) {
-                        _curCardPool.Add(card);
-                    }
+                // 파티 내 캐릭터의 ID와 일치하는 카드만 추가
+                if (item is CardData card 
+                && partyCharacterIDs.Contains(card.OwnerCharacterID)) {
+                    _cardPoolByRarity[card.Rarity].Add(card);
                 }
-                else if (item is OpartsData oparts) {
-                    // 상점 등장 가능한 오파츠이면서, 현재 보유 중이 아닌 경우만 추가
-                    if (oparts.CanAppearShop && !ownedOpartsIDs.Contains(oparts.ID)) {
-                        _curOpartsPool.Add(oparts);
-                    }
+                // 상점 등장 가능한 오파츠이면서, 현재 보유 중이 아닌 경우만 추가
+                else if (item is OpartsData oparts 
+                && oparts.CanAppearShop 
+                && !ownedOpartsIDs.Contains(oparts.ID)) {
+                    _opartsPoolByRarity[oparts.Rarity].Add(oparts);
                 }
             }
         }
@@ -212,10 +227,10 @@ namespace Item
         public ItemData GetRandomItem(System.Type type, ItemRarity rarity)
         {
             if (type == typeof(CardData)) {
-                return ExtractItem(_curCardPool, rarity, type);
+                return ExtractItem(_cardPoolByRarity, _fallbackCardPool, rarity, type);
             }
             else if (type == typeof(OpartsData)) {
-                return ExtractItem(_curOpartsPool, rarity, type);
+                return ExtractItem(_opartsPoolByRarity, _fallbackOpartsPool, rarity, type);
             }
 
             Debug.LogError($"알 수 없는 타입 요청 : {type}");
@@ -230,31 +245,38 @@ namespace Item
         /// <param name="rarity"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        private ItemData ExtractItem<T>(List<T> pool, ItemRarity rarity, System.Type type) where T : ItemData
+        private ItemData ExtractItem<T>(Dictionary<ItemRarity, List<T>> pool, List<T> fallbackPool,  ItemRarity rarity, System.Type type) where T : ItemData
         {
             // 해당 희귀도의 아이템 필터링
-            List<T> filteredItems = pool.FindAll(item => item.Rarity == rarity);
+            List<T> filteredItems = pool[rarity];
 
-            // 해당 희귀도의 아이템이 소진되었을 경우의 예외 처리
-            if (filteredItems.Count == 0) {
-                if (pool.Count == 0) {
-                    Debug.LogWarning($"[{type.Name}]\n" +
-                        $"  타입의 남은 아이템이 풀에 없습니다\n" +
-                        $"  더미 아이템으로 대체됩니다\n");
-                    return GetDummyItem(type, rarity); // 풀이 완전 고갈 시 더미 반환
-                }
+            // 해당 희귀도에 아이템이 남아있는 경우 정상 추출
+            if (filteredItems.Count > 0) {
+                int ranIdx = UnityEngine.Random.Range(0, filteredItems.Count);
+                T selectedItem = filteredItems[ranIdx];
+                filteredItems.RemoveAt(ranIdx); // 중복 등장 방지
 
-                // 희귀도 상관없이 남은 아이템 중 하나를 반환
-                filteredItems = pool;
+                return selectedItem;
             }
 
-            int ranIdx = UnityEngine.Random.Range(0, filteredItems.Count);
-            T selectedItem = filteredItems[ranIdx];
+            // 해당 희귀도에 아이템이 고갈된 경우, 희귀도 상관없이 남은 아이템 중 하나를 반환
+            fallbackPool.Clear();
+            foreach (var list in pool.Values) {
+                fallbackPool.AddRange(list);
+            }
 
-            // 상점 내 중복 등장 방지를 위해 풀에서 즉시 제거
-            pool.Remove(selectedItem);
+            // 풀이 완전 고갈 시 더미 반환
+            if (fallbackPool.Count == 0) {
+                Debug.LogWarning($"[{type.Name}] 남은 아이템이 없어 더미 아이템으로 대체됩니다\n");
+                return GetDummyItem(type, rarity); 
+            }
 
-            return selectedItem;
+            // 희귀도를 무시하고 남은 아이템 중 무작위 추출
+            int fallbackIdx = UnityEngine.Random.Range(0, fallbackPool.Count);
+            T fallbackItem = fallbackPool[fallbackIdx];
+            pool[fallbackItem.Rarity].Remove(fallbackItem); // 중복 등장 방지
+
+            return fallbackItem;
         }
 
         private ItemData GetDummyItem(System.Type type, ItemRarity rarity)

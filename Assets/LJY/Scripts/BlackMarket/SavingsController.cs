@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utils;
@@ -6,7 +7,8 @@ namespace BlackMarket
 {
     public class SavingsController : MonoBehaviour
     {
-        public static SavingsController Instance { get; private set; }
+        public event Action<int> OnDepositRequested;
+        public event Action<int> OnWithdrawRequested;
 
         // -- UI 캐싱 --
         private VisualElement _savingsRoot;
@@ -18,16 +20,6 @@ namespace BlackMarket
         private Button _btnDeposit;
         private Button _btnWithdraw;
         private Button _btnClose;
-
-        private void Awake()
-        {
-            if (Instance == null) {
-                Instance = this;
-            }
-            else {
-                Destroy(gameObject);
-            }
-        }
 
         /// <summary>
         /// 매니저가 생성한 UI Root를 넘겨받아 초기화
@@ -95,19 +87,19 @@ namespace BlackMarket
         /// <summary>
         /// 매니저에게 실제 입금 요청
         /// </summary>
-        private void OnDepositClicked()
+        public void OnDepositClicked()
         {
             if (_sldAmount == null) return;
-            BlackMarketManager.Instance.RequestDeposit(_sldAmount.value);
+            OnDepositRequested?.Invoke(_sldAmount.value);
         }
 
         /// <summary>
         /// 매니저에게 실제 인출 요청
         /// </summary>
-        private void OnWithdrawClicked()
+        public void OnWithdrawClicked()
         {
             if (_sldAmount == null) return;
-            BlackMarketManager.Instance.RequestWithdraw(_sldAmount.value);
+            OnWithdrawRequested?.Invoke(_sldAmount.value);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utils;
@@ -6,7 +7,7 @@ namespace BlackMarket
 {
     public class MembershipController : MonoBehaviour
     {
-        public static MembershipController Instance { get; private set; }
+        public event Action OnUpgradeRequested;
 
         // -- UI 캐싱 --
         private VisualElement _membershipRoot;
@@ -15,16 +16,6 @@ namespace BlackMarket
 
         private Button _btnUpgrade;
         private Button _btnClose;
-
-        private void Awake()
-        {
-            if (Instance == null) {
-                Instance = this;
-            }
-            else {
-                Destroy(gameObject);
-            }
-        }
 
         /// <summary>
         /// 매니저가 생성한 UI Root를 넘겨받아 초기화
@@ -88,12 +79,7 @@ namespace BlackMarket
         /// </summary>
         private void OnUpgradeClicked()
         {
-            if (BlackMarketManager.Instance == null) {
-                Debug.LogError("블랙마켓 매니저 미 생성");
-                return;
-            }
-
-            BlackMarketManager.Instance.RequestUpgradeMembership();
+            OnUpgradeRequested?.Invoke();
         }
     }
 }

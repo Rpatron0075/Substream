@@ -28,6 +28,20 @@ namespace Localization
         // 언어가 실시간으로 변경되었을 때 켜져있는 UI들이 텍스트를 갱신할 수 있도록 날리는 이벤트
         public static Action<LanguageType> OnLanguageChanged;
 
+        private static readonly LanguageType[] _cachedLanguageKeys;
+        private static readonly string[] _cachedLanguageStrings;
+
+        static LocalizationManager()
+        {
+            _cachedLanguageKeys = (LanguageType[])Enum.GetValues(typeof(LanguageType));
+            _cachedLanguageStrings = new string[_cachedLanguageKeys.Length];
+
+            // Enum 값들을 미리 문자열로 변환하여 배열에 저장
+            for (int i = 0; i < _cachedLanguageKeys.Length; i++) {
+                _cachedLanguageStrings[i] = _cachedLanguageKeys[i].ToString();
+            }
+        }
+
         /// <summary>
         /// 게임 시작 시 한 번만 호출하여 다국어 DB를 로드함
         /// </summary>
@@ -42,7 +56,6 @@ namespace Localization
             _localDB.Clear();
 
             List<Dictionary<string, object>> dataList = CSVReader.Read("LocalizationTable");
-
             if (dataList == null || dataList.Count == 0) {
                 Debug.LogError("[LocalizationManager] LocalizationTable.csv 데이터를 불러올 수 없습니다");
                 return;
@@ -52,14 +65,15 @@ namespace Localization
                 string key = row.ContainsKey("TextKey") ? row["TextKey"].ToString() : "";
                 if (string.IsNullOrEmpty(key)) continue;
 
-                var textDict = new Dictionary<LanguageType, string>();
+                var textDict = new Dictionary<LanguageType, string>(_cachedLanguageKeys.Length);
 
                 // Enum에 정의된 모든 언어를 순회하며 동적으로 딕셔너리에 매핑
-                foreach (LanguageType lang in Enum.GetValues(typeof(LanguageType))) {
-                    string langStr = lang.ToString();
+                for (int i = 0; i < _cachedLanguageKeys.Length; i++) {
+                    var lang = _cachedLanguageKeys[i];
+                    string langStr = _cachedLanguageStrings[i];
                     string translatedText = row.ContainsKey(langStr) ? row[langStr].ToString() : "";
 
-                    // 엑셀에서 줄바꿈을 \n으로 입력했을 경우, 실제 이스케이프 문자로 치환하여 유니티에서 줄바꿈이 되도록 처리
+                    // 엑셀에서 줄바꿈을 \n으로 입력했을 경우, 실제 이스케이프 문자로 치환
                     translatedText = translatedText.Replace("<br>", "\n");
                     translatedText = translatedText.Replace("\\n", "\n");
                     textDict[lang] = translatedText;

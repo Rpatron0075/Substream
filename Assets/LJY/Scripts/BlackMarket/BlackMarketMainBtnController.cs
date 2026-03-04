@@ -8,8 +8,13 @@ namespace BlackMarket
     /// <summary>
     /// 블랙마켓 메인기능과 연결된 버튼 컨트롤러
     /// </summary>
-    public class BlackMarketBtnController : MonoBehaviour
+    [RequireComponent(typeof(BlackMarketManager))]
+    [RequireComponent(typeof(SavingsController))]
+    public class BlackMarketMainBtnController : MonoBehaviour
     {
+        private BlackMarketManager _bmManager;
+        private SavingsController _savingsController;
+
         [Header("버튼 이름")]
         [SerializeField][Tooltip("블랙마켓 퇴장 버튼")] private string _exitBtnName;
         [SerializeField][Tooltip("상품 초기화 버튼")] private string _refreshBtnName;
@@ -23,10 +28,13 @@ namespace BlackMarket
         private Button _settingBtn;
         private Button _savingsBtn;
         private Button _membershipBtn;
-
         // ------------------------------------
+
         public void OnEnable()
         {
+            _bmManager = GetComponent<BlackMarketManager>();
+            _savingsController = GetComponent<SavingsController>();
+
             // 다국어 변경 이벤트
             LocalizationManager.OnLanguageChanged += OnLanguageChanged;
         }
@@ -48,14 +56,15 @@ namespace BlackMarket
         private void OnLanguageChanged(LanguageType newLanguage)
         {
             // 현재 Manager가 들고 있는 레벨 값을 가져와서 텍스트 UI 새로고침
-            if (BlackMarketManager.Instance == null) {
+            if (_bmManager == null) {
                 Debug.LogError("블랙마켓 매니저 미할당");
                 return;
             }
 
-            UpdateMembershipBtnText(BlackMarketManager.Instance.CurMembershipLevel);
-            UpdateSavingsBtnText(BlackMarketManager.Instance.CurSavingsLevel);
-            BlackMarketManager.Instance.RefreshLocalization();
+            UpdateRefreshBtnText(_bmManager.CurRemainingRefreshCount);
+            UpdateMembershipBtnText(_bmManager.CurMembershipLevel);
+            UpdateSavingsBtnText(_bmManager.CurSavingsLevel);
+            _bmManager.RefreshLocalization();
         }
 
         /// <summary>
@@ -87,7 +96,34 @@ namespace BlackMarket
         }
 
         /// <summary>
-        /// 메인 화면의 멤버십 버튼 텍스트 갱신
+        /// 새로고침 버튼 텍스트 갱신
+        /// </summary>
+        /// <param name="count"></param>
+        public void UpdateRefreshBtnText(int count)
+        {
+            if (_refreshBtn == null) {
+                Debug.LogWarning("새로고침 버튼을 찾을 수 없습니다");
+                return;
+            }
+            string localizedText = LocalizationManager.GetText("UI_Refresh");
+            _refreshBtn.text = $"{localizedText} X {count}";
+        }
+
+        /// <summary>
+        /// 저축 버튼 텍스트 갱신
+        /// </summary>
+        public void UpdateSavingsBtnText(int level)
+        {
+            if (_savingsBtn == null) {
+                Debug.LogWarning("저축 버튼을 찾을 수 없습니다");
+                return;
+            }
+            string localizedText = LocalizationManager.GetText("UI_Savings_Lv");
+            _savingsBtn.text = $"{localizedText} {level}";
+        }
+
+        /// <summary>
+        /// 멤버십 버튼 텍스트 갱신
         /// </summary>
         public void UpdateMembershipBtnText(int level)
         {
@@ -100,31 +136,19 @@ namespace BlackMarket
         }
 
         /// <summary>
-        /// 메인 화면의 저축 버튼 텍스트 갱신
+        /// 새로고침 버튼 상태 갱신
         /// </summary>
-        public void UpdateSavingsBtnText(int level)
+        /// <param name="state">새로고침 상태</param>
+        public void UpdateRefreshBtnState(RefreshState state)
         {
-            if (_savingsBtn == null) {
-                Debug.LogWarning("저축 버튼을 찾을 수 없습니다");
-                return;
-            }
-            string localizedText = LocalizationManager.GetText("UI_Savings_Lv");
-            _savingsBtn.text = $"{localizedText} {level}";
+            _refreshBtn.style.opacity = state == RefreshState.Active ? 1f : 0.5f;
         }
 
         // ---- 이벤트 콜백 ----
-        private void OnClickExit() => BlackMarketManager.Instance.CloseBlackMarket();
-        private void OnRefreshSlots() => BlackMarketManager.Instance.HandleRefreshRequest();
+        private void OnClickExit() => _bmManager?.CloseBlackMarket();
+        private void OnRefreshSlots() => _bmManager?.HandleRefreshRequest();
         private void OnPopUpSettingPanel() => SettingPanelController.Instance?.OpenPanel();
-        private void OnClickOpenSavings()
-        {
-            if (SavingsController.Instance == null) {
-                Debug.LogWarning("저축 컨트롤러 미 생성");
-                return;
-            }
-
-            SavingsController.Instance.OpenPopup(BlackMarketManager.Instance.CurSavingsLevel, BlackMarketManager.Instance.Savings);
-        }
-        private void OnClickOpenMembership() => BlackMarketManager.Instance.OpenMembershipPopup();
+        private void OnClickOpenSavings() => _savingsController?.OpenPopup(_bmManager.CurSavingsLevel, _bmManager.Savings);
+        private void OnClickOpenMembership() => _bmManager?.OpenMembershipPopup();
     }
 }

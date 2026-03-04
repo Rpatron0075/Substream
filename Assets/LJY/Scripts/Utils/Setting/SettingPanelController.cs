@@ -61,6 +61,9 @@ namespace Utils
             InitializeTabsAndPages();
         }
 
+        /// <summary>
+        /// 각 설정창 생성/초기화 및 Setter 연결
+        /// </summary>
         private void InitializeTabsAndPages()
         {
             _tabPages.Clear();
@@ -111,6 +114,10 @@ namespace Utils
             _tabPages.Add(tabBtn, page);
         }
 
+        /// <summary>
+        /// 특정 설정창을 화면에 표시함
+        /// </summary>
+        /// <param name="selectedTab">선택한 설정창 열람 버튼</param>
         private void SelectTab(Button selectedTab)
         {
             if (selectedTab == _currentActiveTab) return;

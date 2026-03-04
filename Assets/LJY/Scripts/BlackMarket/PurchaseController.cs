@@ -1,4 +1,3 @@
-using Audio.Controller;
 using Item;
 using Localization;
 using System;
@@ -10,11 +9,6 @@ namespace BlackMarket
 {
     public class PurchaseController : MonoBehaviour
     {
-        public static PurchaseController Instance { get; private set; }
-
-        [Header("Audio Settings")]
-        [SerializeField] private string SFX_OPENSLOT = "SFX_OpenSlot";
-
         // -- UI 캐싱 --
         private VisualElement _purchaseRoot;
         private Label _popupName;
@@ -30,16 +24,9 @@ namespace BlackMarket
         private ItemData _selectedItemData;
         private int _selectedSlotIdx = -1;
 
-        private void Awake()
-        {
-            if (Instance == null) {
-                Instance = this;
-            }
-            else {
-                Destroy(gameObject);
-            }
-        }
-
+        // -- 이벤트 --
+        public event Action<int, ItemData> OnPurchaseConfirmed;
+        
         /// <summary>
         /// 매니저가 생성한 UI Root를 넘겨받아 초기화
         /// </summary>
@@ -85,7 +72,6 @@ namespace BlackMarket
             }
 
             _purchaseRoot.ShowPopupFade();
-            AudioController.Instance.PlaySFX(SFX_OPENSLOT);
         }
 
         public void ClosePopup()
@@ -95,12 +81,14 @@ namespace BlackMarket
             _selectedItemData = null;
         }
 
+        /// <summary>
+        /// 블랙마켓 매니저에게 구매 버튼이 눌렸음을 알림
+        /// </summary>
         private void OnBuyClicked()
         {
             if (_selectedItemData == null) return;
 
-            // 실제 재화 계산 및 아이템 추가는 Manager에게 위임
-            BlackMarketManager.Instance.ProcessPurchase(_selectedSlotIdx, _selectedItemData);
+            OnPurchaseConfirmed?.Invoke(_selectedSlotIdx, _selectedItemData);
         }
 
         /// <summary>

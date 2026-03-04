@@ -19,7 +19,7 @@ namespace Audio.Controller
         [SerializeField] private AudioSource _sfxSource;
         [SerializeField] private AudioSource _voSource;
 
-        private string _currentBgmID = "";
+        private float _curBgmBaseVolume = 1f;
 
         private void Awake()
         {
@@ -39,6 +39,8 @@ namespace Audio.Controller
                     $"SFX : {_sfxSource.name}\n" +
                     $"VO : {_voSource.name}\n");
             }
+
+            _audioDB.Initialize();
         }
 
         private void OnEnable()
@@ -71,12 +73,7 @@ namespace Audio.Controller
 
             if (_bgmSource != null) {
                 _bgmSource.mute = isMasterMuted || !_audioSettings.isBgmOn;
-
-                float bgmDataVol = 1f;
-                if (!string.IsNullOrEmpty(_currentBgmID) && _audioDB != null) {
-                    bgmDataVol = _audioDB.GetAudioVolume(_currentBgmID);
-                }
-                _bgmSource.volume = masterVol * _audioSettings.bgmVolume * bgmDataVol;
+                _bgmSource.volume = masterVol * _audioSettings.bgmVolume * _curBgmBaseVolume;
             }
             if (_sfxSource != null) {
                 _sfxSource.mute = isMasterMuted || !_audioSettings.isSfxOn;
@@ -94,15 +91,16 @@ namespace Audio.Controller
         /// <param name="id"></param>
         public void PlayBGM(string id)
         {
-            if (_bgmSource == null || _audioDB == null) { 
-                LogingSourceAndDB(_bgmSource, _audioDB);
-                return;
+            if (_bgmSource == null || _audioDB == null) return;
+
+            if (_audioDB.TryGetAudioData(id, out var data)) {
+                _curBgmBaseVolume = data.volume;
+                _bgmSource.clip = data.clip;
+                _bgmSource.loop = true;
+                _bgmSource.Play();
+
+                UpdateAudioSettings();
             }
-
-            _currentBgmID = id;
-            UpdateAudioSettings();
-
-            _audioDB.PlayLoop(_bgmSource, id);
         }
 
         /// <summary>
@@ -111,11 +109,11 @@ namespace Audio.Controller
         /// <param name="id"></param>
         public void PlaySFX(string id)
         {
-            if (_sfxSource == null || _audioDB == null) { 
-                LogingSourceAndDB(_sfxSource, _audioDB); 
-                return;
+            if (_sfxSource == null || _audioDB == null) return;
+
+            if (_audioDB.TryGetAudioData(id, out var data)) {
+                _sfxSource.PlayOneShot(data.clip, data.volume);
             }
-            _audioDB.PlayOneShot(_sfxSource, id);
         }
 
         /// <summary>
@@ -124,16 +122,11 @@ namespace Audio.Controller
         /// <param name="id">호출하는 스크립트에서 제공함</param>
         public void PlayVO(string id)
         {
-            if (_voSource == null || _audioDB == null) {
-                LogingSourceAndDB(_voSource, _audioDB);
-                return;
-            }
-            _audioDB.PlayOneShot(_voSource, id);
-        }
+            if (_voSource == null || _audioDB == null) return;
 
-        private void LogingSourceAndDB(AudioSource source, AudioDatabaseSO db)
-        {
-            Debug.LogWarning($"Source : {source}\nDB : {db}");
+            if (_audioDB.TryGetAudioData(id, out var data)) {
+                _voSource.PlayOneShot(data.clip, data.volume);
+            }
         }
     }
 }
