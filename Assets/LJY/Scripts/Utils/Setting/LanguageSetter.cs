@@ -15,7 +15,9 @@ namespace Utils
         [Header("UI 이름 설정")]
         [SerializeField] private string _languageDropdownName = "Dropdown_Language";
 
+        private Label _lblLanguageTitle;
         private DropdownField _languageDropdown;
+        private Label _lblDescription;
 
         private void Awake()
         {
@@ -34,7 +36,9 @@ namespace Utils
         /// <param name="root">언어 세팅 페이지 UI Root</param>
         public void ConnectSettingUI(VisualElement root)
         {
+            _lblLanguageTitle = root.Q<Label>("Title");
             _languageDropdown = root.Q<DropdownField>(_languageDropdownName);
+            _lblDescription = root.Q<Label>("Description");
 
             if (_languageDropdown == null) {
                 Debug.LogWarning($"[{nameof(LanguageSetter)}] '{_languageDropdownName}'를 찾을 수 없습니다");
@@ -52,13 +56,22 @@ namespace Utils
 
             // UI 상에서 값 변경 시 이벤트 콜백 등록
             _languageDropdown.RegisterValueChangedCallback(evt => {
+                if (!_languageDropdown.choices.Contains(evt.newValue)) return;
+
                 if (Enum.TryParse(evt.newValue, out LanguageType newLanguage)) {
                     LocalizationManager.ChangeLanguage(newLanguage);
                 }
                 else {
-                    Debug.LogError($"[{nameof(LanguageSetter)}] 지원하지 않는 언어 타입입니다 : {evt.newValue}");
+                    Debug.LogError($"[LanguageSetter] 지원하지 않는 언어 타입입니다 : {evt.newValue}");
                 }
             });
+        }
+
+        public void RefreshTranslation()
+        {
+            _lblLanguageTitle.text = LocalizationManager.GetText(UIKeys.Setting.LANGUAGE_TITLE);
+            _languageDropdown.Q<Label>().text = LocalizationManager.GetText(UIKeys.Setting.LANGUAGE_DROPDOWN_TITLE);
+            _lblDescription.text = LocalizationManager.GetText(UIKeys.Setting.LANGUAGE_DESCRIPTION);
         }
     }
 }

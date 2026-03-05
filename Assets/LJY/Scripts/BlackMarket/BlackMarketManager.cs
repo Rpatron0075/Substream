@@ -1,9 +1,10 @@
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UIElements;
 using Audio.Controller;
 using Audio.Data;
 using Item;
+using Localization;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
 using Utils;
 
 namespace BlackMarket
@@ -123,6 +124,7 @@ namespace BlackMarket
 
         // -- UID 변수 --
         private VisualElement _blackMarketRoot;
+        private Label _coinTitleLabel;
         private Label _coinValue;
         private VisualElement _slotContainer;
 
@@ -271,6 +273,7 @@ namespace BlackMarket
                 _cwController.Initialize(_blackMarketRoot);
                 _cwController.OnCharacterClicked += HandleCharacterClick;
             }
+            _coinTitleLabel = _blackMarketRoot.Q<VisualElement>("Coin_Panel").Q<Label>("Title");
             _coinValue = _blackMarketRoot.Q<VisualElement>("Coin_Panel").Q<Label>("Value");
             _slotContainer = _blackMarketRoot.Q<VisualElement>("Item_Grid_Container");
 
@@ -320,6 +323,25 @@ namespace BlackMarket
 
             // 블랙마켓 대사 매니저 초기화
             _dmBlackMarket.Initialize("NPC_BlackMarket", DialogueKeys.BlackMarket.NPC_ID);
+
+            var ddoManager = DontDestroyOnLoadManager.Instance;
+            if (ddoManager != null && ddoManager.ResourceManager != null) {
+                // int curUserID = ddoManager.ResourceManager.SelectUserID;
+                // var curUserData = ddoManager.LocalUser(curUserID);
+
+                // List<int> currentPartyIDs = curUserData.PartyCharacterIDs;
+                // List<int> ownedOpartsIDs = curUserData.OwnedOpartsIDs;
+                // _coinValue.text = curUserData.Gold.ToString("N0");
+
+                // <---- 임시 더미 데이터 ---->
+                List<int> curPartyIDs = new List<int> { 0, 1, 2, 3 };
+                List<int> ownedOpartsIDs = new List<int> { 101 };
+                _coinTitleLabel.text = LocalizationManager.GetText(UIKeys.BlackMarket.TOTAL_COIN_TITLE);
+                _coinValue.text = CurrentGold.ToString("N0");
+
+                // 조건에 맞는 아이템 풀 사전 생성
+                _itemDatabase.CreateItemPool(curPartyIDs, ownedOpartsIDs);
+            }
         }
 
         // ----- 팝업 생성/초기화 기능 -----
@@ -397,6 +419,11 @@ namespace BlackMarket
         {
             RegistMarketItems();
 
+            SettingPanelController.Instance.RefreshTranslation();
+            _purchaseController.RefreshTranslation();
+            _savingsController.RefreshTranslation();
+            _membershipController.RefreshTranslation();
+
             AudioController.Instance.PlayBGM(AudioKeys.BGM_BLACKMARKET);
             AudioController.Instance.PlaySFX(AudioKeys.SFX_DOOR);
             AudioController.Instance.PlaySFX(AudioKeys.SFX_DOORBELL);
@@ -445,27 +472,11 @@ namespace BlackMarket
         /// </summary>
         private void RegistMarketItems()
         {
-            var ddoManager = DontDestroyOnLoadManager.Instance;
-            if (ddoManager != null && ddoManager.ResourceManager != null) {
-                // int curUserID = ddoManager.ResourceManager.SelectUserID;
-                // var curUserData = ddoManager.LocalUser(curUserID);
-
-                // List<int> currentPartyIDs = curUserData.PartyCharacterIDs;
-                // List<int> ownedOpartsIDs = curUserData.OwnedOpartsIDs;
-                // _coinValue.text = curUserData.Gold.ToString("N0");
-
-                // <---- 임시 더미 데이터 ---->
-                List<int> curPartyIDs = new List<int> { 0, 1, 2, 3 };
-                List<int> ownedOpartsIDs = new List<int> { 101 };
-                _coinValue.text = CurrentGold.ToString("N0");
-
-                // 조건에 맞는 아이템 풀 사전 생성
-                _itemDatabase.CreateItemPool(curPartyIDs, ownedOpartsIDs);
-            }
-
             AddItemSlot(); // 저축하면 새로고침 시 슬롯 추가
             List<System.Type> curSlotTypes = GenerateSlotTypes(TotalSlotCount); // 아이템 종류 생성
+
             _itemsData.Clear();
+
             GenerateItems(curSlotTypes); // 아이템 결정/데이터 호출
             BindSlotUI();
         }
@@ -834,6 +845,8 @@ namespace BlackMarket
         /// </summary>
         public void RefreshLocalization()
         {
+            _coinTitleLabel.text = LocalizationManager.GetText(UIKeys.BlackMarket.TOTAL_COIN_TITLE);
+
             // 아이템 슬롯들 이름 갱신
             if (_slotControllers != null) {
                 foreach (var slot in _slotControllers) {
@@ -841,8 +854,11 @@ namespace BlackMarket
                 }
             }
 
-            // 만약 상세 구매 팝업이 켜져 있다면 팝업 이름 갱신
+            // 만약 상세 팝업이 켜져 있다면 팝업 이름 갱신
+            SettingPanelController.Instance.RefreshTranslation();
             _purchaseController.RefreshTranslation();
+            _savingsController.RefreshTranslation();
+            _membershipController.RefreshTranslation();
         }
     }
 }

@@ -1,3 +1,4 @@
+using Localization;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -11,7 +12,14 @@ namespace BlackMarket
 
         // -- UI 캐싱 --
         private VisualElement _membershipRoot;
+
+        private Label _lblMembershipTitle;
+        private Label _lblMembershipDescription;
+
+        private Label _lblCurMembershipLevelTitle;
         private Label _lblCurMembershipLevel;
+
+        private Label _lblMembershipUpgradeCostTitle;
         private Label _lblMembershipUpgradeCost;
 
         private Button _btnUpgrade;
@@ -24,8 +32,14 @@ namespace BlackMarket
         {
             _membershipRoot = root;
 
-            _lblCurMembershipLevel = _membershipRoot.Q<Label>("Lbl_CurrentMembershipLevel");
-            _lblMembershipUpgradeCost = _membershipRoot.Q<Label>("Lbl_MembershipUpgradeCost");
+            _lblMembershipTitle = _membershipRoot.Q<VisualElement>("Header").Q<Label>("Title");
+            _lblMembershipDescription = _membershipRoot.Q<VisualElement>("Header").Q<Label>("Description");
+
+            _lblCurMembershipLevelTitle = _membershipRoot.Q<VisualElement>("CurMembershipLevel").Q<Label>("Title");
+            _lblCurMembershipLevel = _membershipRoot.Q<VisualElement>("CurMembershipLevel").Q<Label>("Value");
+
+            _lblMembershipUpgradeCostTitle = _membershipRoot.Q<VisualElement>("PromotionCost").Q<Label>("Title");
+            _lblMembershipUpgradeCost = _membershipRoot.Q<VisualElement>("PromotionCost").Q<Label>("Value");
 
             _btnUpgrade = _membershipRoot.Q<Button>("Btn_UpgradeMembership");
             _btnClose = _membershipRoot.Q<Button>("Btn_CloseMembership");
@@ -80,6 +94,21 @@ namespace BlackMarket
         private void OnUpgradeClicked()
         {
             OnUpgradeRequested?.Invoke();
+        }
+
+        /// <summary>
+        /// 다국어 변경 시 이 컨트롤러가 팝업 번역을 스스로 갱신
+        /// </summary>
+        public void RefreshTranslation()
+        {
+            if (_membershipRoot != null) {
+                _lblMembershipTitle.text = LocalizationManager.GetText(UIKeys.BlackMarket.MEMBERSHIP_TITLE);
+                _lblMembershipDescription.text = LocalizationManager.GetText(UIKeys.BlackMarket.MEMBERSHIP_DESCRIPTION);
+                _lblCurMembershipLevelTitle.text = LocalizationManager.GetText(UIKeys.BlackMarket.MEMBERSHIP_CURLEVEL);
+                _lblMembershipUpgradeCostTitle.text = LocalizationManager.GetText(UIKeys.BlackMarket.MEMBERSHIP_PROMOTION_REQUIRMENT);
+                _btnUpgrade.text = LocalizationManager.GetText(UIKeys.BlackMarket.BTN_MEMBERSHIP_UPGRADE);
+                _btnClose.text = LocalizationManager.GetText(UIKeys.Common.BTN_CLOSE);
+            }
         }
     }
 }

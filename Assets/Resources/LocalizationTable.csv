@@ -1,7 +1,34 @@
 TextKey,KR,EN,JP,CN
-UI_Savings_Lv,저축,Savings,貯蓄,储蓄
-UI_Membership_Lv,멤버십,Membership,メンバーシップ,成员资格
-UI_Refresh,새로고침,Refresh,リフレッシュ,重新装入
+UI_Btn_Confirm,확인,Confirm,確認,确定
+UI_Btn_Close,닫기,Close,閉じる,关闭
+UI_Btn_Setting,설정,Setting,設定,设置
+UI_Btn_Exit,나가기,Exit,退出,退出
+UI_Setting_Title,설정,Setting,設定,设置
+UI_Setting_Btn_Audio,사운드,Sound,サウンド,声音
+UI_Setting_Btn_Language,언어,Language,言語,语言
+UI_Setting_Audio_Title,사운드,Sound,サウンド,声音
+UI_Setting_Audio_Master,전체 소리,Master,全体 音声,整体声音
+UI_Setting_Audio_BGM,배경음악,BGM,背景音楽,背景音乐
+UI_Setting_Audio_SFX,효과음,SFX,効果音,效果音
+UI_Setting_Audio_VO,캐릭터 음성,VO,キャラクター 音声,卡通语音
+UI_Setting_Language_Title,언어,Language,言語,语言
+UI_Setting_Language_Dropdown_Title,게임 표시 언어,Game Display Language,ゲーム表示言語,游戏标识语言
+UI_Setting_Language_Description,* 언어를 변경하면 즉시 게임 내 UI에 반영됩니다.,"* If you change the language, it will be immediately reflected in the in-game UI.",* 言語を変更すると、すぐにゲーム内UIに反映されます。,* 更改语言后会立即反映到游戏内的UI上。
+UI_BM_TotalCoin_Title,보유 재화,Possession,所持資産,库存货物
+UI_BM_Btn_Refresh,새로고침,Refresh,リフレッシュ,重新装入
+UI_BM_Btn_Savings,저축,Savings,貯蓄,储蓄
+UI_BM_Btn_Membership,멤버십,Membership,メンバーシップ,成员资格
+UI_BM_Savings_Title,블랙마켓 뱅크,Black Market Bank,ブラックマーケットバンク,黑市银行
+UI_BM_Savings_CurrentLevel,현재 저축 단계,Current Savings Stage,現在の貯蓄段階,当前储蓄阶段
+UI_BM_Savings_Accumulate,누적 저축액,Cumulative Savings,累積貯蓄額,累积储蓄额
+UI_BM_Savings_TransactionAmount,거래 금액,Transaction Amount,取引金額,交易额
+UI_BM_Savings_Btn_Deposit,저축,Save,貯蓄,储蓄
+UI_BM_Savings_Btn_Withdraw,인출,Withdraw,出金,提取
+UI_BM_Membership_Title,VIP 멤버십,VIP Membership,VIPメンバーシップ,贵宾会员
+UI_BM_Membership_Description,더 높은 등급의 아이템과 오파츠를 만나보세요!,Meet higher-rated items and Oparts!,より高いランクのアイテムとオパーツに出会いましょう！,来看看更高等级的单品和OPATZ吧！
+UI_BM_Membership_CurrentLevel,현재 멤버십 등급,Current Membership Rating,現在のメンバーシップ等級,当前会员级别
+UI_BM_Membership_PromotionRequirment,다음 승급 요구 비용,next promotion requirement cost,次の昇格要求費用,下次升级要求费用
+UI_BM_Membership_Btn_Upgrade,승급,Promotion,昇級,升级
 NPC_Name_BlackMarket,블랙마켓 딜러,Black Market Dealer,闇市の売人,黑市商人
 BM_Enter_01,어둠의 상점에 오신 것을 환영합니다.,Welcome to the shadow market.,闇の市場へようこそ。,欢迎来到地下黑市。
 BM_Enter_02,"목숨을 건졌다면, 돈을 쓸 차례입니다.",Survived? Then it's time to spend.,生き延びたなら、金を使う番だ。,既然活下来了，就该花钱了。

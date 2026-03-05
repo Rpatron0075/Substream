@@ -61,6 +61,8 @@ namespace BlackMarket
                 return;
             }
 
+            _settingBtn.text = LocalizationManager.GetText(UIKeys.Common.BTN_SETTIG);
+            _exitBtn.text = LocalizationManager.GetText(UIKeys.Common.BTN_EXIT);
             UpdateRefreshBtnText(_bmManager.CurRemainingRefreshCount);
             UpdateMembershipBtnText(_bmManager.CurMembershipLevel);
             UpdateSavingsBtnText(_bmManager.CurSavingsLevel);
@@ -105,7 +107,7 @@ namespace BlackMarket
                 Debug.LogWarning("새로고침 버튼을 찾을 수 없습니다");
                 return;
             }
-            string localizedText = LocalizationManager.GetText("UI_Refresh");
+            string localizedText = LocalizationManager.GetText(UIKeys.BlackMarket.BTN_REFRESH);
             _refreshBtn.text = $"{localizedText} X {count}";
         }
 
@@ -118,7 +120,7 @@ namespace BlackMarket
                 Debug.LogWarning("저축 버튼을 찾을 수 없습니다");
                 return;
             }
-            string localizedText = LocalizationManager.GetText("UI_Savings_Lv");
+            string localizedText = LocalizationManager.GetText(UIKeys.BlackMarket.BTN_SAVINGS);
             _savingsBtn.text = $"{localizedText} {level}";
         }
 
@@ -131,7 +133,7 @@ namespace BlackMarket
                 Debug.LogWarning("멤버십 버튼을 찾을 수 없습니다");
                 return;
             }
-            string localizedText = LocalizationManager.GetText("UI_Membership_Lv");
+            string localizedText = LocalizationManager.GetText(UIKeys.BlackMarket.BTN_MEMBERSHIP);
             _membershipBtn.text = $"{localizedText} {level}";
         }
 

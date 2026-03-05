@@ -96,10 +96,11 @@ namespace BlackMarket
         /// </summary>
         public void RefreshTranslation()
         {
-            // 팝업이 열려있고 데이터가 있을 때만 갱신
-            if (_purchaseRoot != null && _purchaseRoot.style.display == DisplayStyle.Flex && _selectedItemData != null) {
-                if (_popupName != null) _popupName.text = LocalizationManager.GetText(_selectedItemData.Name);
-                if (_popupInfo != null) _popupInfo.text = LocalizationManager.GetText(_selectedItemData.Info);
+            if (_purchaseRoot != null && _selectedItemData != null) {
+                _purchaseRoot.name = LocalizationManager.GetText(UIKeys.Common.BTN_CONFIRM);
+
+                _popupName.text = LocalizationManager.GetText(_selectedItemData.Name);
+                _popupInfo.text = LocalizationManager.GetText(_selectedItemData.Info);
             }
         }
     }

@@ -1,3 +1,4 @@
+using Localization;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -13,6 +14,12 @@ namespace Utils
         [SerializeField] private VisualTreeAsset _languagePageUXML;
 
         private VisualElement _settingRoot;
+
+        private Label _lblSettingTitle;
+
+        private Button _btnAudioTab;
+        private Button _btnLanguageTab;
+
         private VisualElement _pagesContainer;
         private Button _btnClose;
 
@@ -32,8 +39,10 @@ namespace Utils
                 Instance = this;
                 return;
             }
+            else {
+                Destroy(gameObject);
+            }
 
-            Destroy(gameObject);
         }
 
         /// <summary>
@@ -42,6 +51,10 @@ namespace Utils
         public void ConnectSettingUI(VisualElement root)
         {
             _settingRoot = root;
+
+            _lblSettingTitle = _settingRoot.Q<Label>("Title");
+            _btnAudioTab = _settingRoot.Q<Button>("Tab_Audio");
+            _btnLanguageTab = _settingRoot.Q<Button>("Tab_Language");
 
             // 공통 닫기 버튼
             _btnClose = _settingRoot.Q<Button>("Btn_CloseSetting");
@@ -73,8 +86,7 @@ namespace Utils
                 VisualElement audioPage = _audioPageUXML.Instantiate().Q("Page_Audio");
                 _pagesContainer.Add(audioPage);
 
-                Button tabAudio = _settingRoot.Q<Button>("Tab_Audio");
-                RegisterTab(tabAudio, audioPage);
+                RegisterTab(_btnAudioTab, audioPage);
 
                 if (AudioSetter.Instance != null) {
                     AudioSetter.Instance.ConnectSettingUI(audioPage);
@@ -86,8 +98,7 @@ namespace Utils
                 VisualElement languagePage = _languagePageUXML.Instantiate().Q("Page_Language");
                 _pagesContainer.Add(languagePage);
 
-                Button tabLanguage = _settingRoot.Q<Button>("Tab_Language");
-                RegisterTab(tabLanguage, languagePage);
+                RegisterTab(_btnLanguageTab, languagePage);
 
                 if (LanguageSetter.Instance != null) {
                     LanguageSetter.Instance.ConnectSettingUI(languagePage);
@@ -141,6 +152,19 @@ namespace Utils
                 }
             }
         }
+
+        public void RefreshTranslation()
+        {
+            if (_settingRoot != null) {
+                _lblSettingTitle.text = LocalizationManager.GetText(UIKeys.Setting.TITLE);
+                _btnAudioTab.text = LocalizationManager.GetText(UIKeys.Setting.BTN_AUDIO);
+                _btnLanguageTab.text = LocalizationManager.GetText(UIKeys.Setting.BTN_LANGUAGE);
+                _btnClose.text = LocalizationManager.GetText(UIKeys.Common.BTN_CLOSE);
+            }
+            AudioSetter.Instance.RefreshTranslation();
+            LanguageSetter.Instance.RefreshTranslation();
+        }
+
 
         /// <summary>
         /// 세팅 패널 열기

@@ -1,6 +1,7 @@
+using Audio.Data;
+using Localization;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Audio.Data;
 
 namespace Utils
 {
@@ -25,6 +26,9 @@ namespace Utils
         [SerializeField] private string _bgmSld = "Sld_BGM";
         [SerializeField] private string _sfxSld = "Sld_SFX";
         [SerializeField] private string _voSld = "Sld_VO";
+
+        // -- Labels --
+        private Label _lblAudioTitle;
 
         // -- Toggles --
         private Toggle _tglMaster;
@@ -59,6 +63,8 @@ namespace Utils
                 Debug.LogWarning("AudioSettingsSO가 할당되지 않았습니다");
                 return;
             }
+
+            _lblAudioTitle = root.Q<Label>("Title");
 
             _tglMaster = root.Q<Toggle>(_marsterTgl);
             _tglBGM = root.Q<Toggle>(_bgmTgl);
@@ -116,6 +122,15 @@ namespace Utils
                 _audioSettings.voVolume = evt.newValue;
                 _audioSettings.ApplyChanges();
             });
+        }
+
+        public void RefreshTranslation()
+        {
+            _lblAudioTitle.text = LocalizationManager.GetText(UIKeys.Setting.AUDIO_TITLE);
+            _tglMaster.label = LocalizationManager.GetText(UIKeys.Setting.AUDIO_MASTER);
+            _tglBGM.label = LocalizationManager.GetText(UIKeys.Setting.AUDIO_BGM);
+            _tglSFX.label = LocalizationManager.GetText(UIKeys.Setting.AUDIO_SFX);
+            _tglVO.label = LocalizationManager.GetText(UIKeys.Setting.AUDIO_VO);
         }
     }
 }

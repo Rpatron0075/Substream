@@ -1,3 +1,4 @@
+using Localization;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,10 +13,18 @@ namespace BlackMarket
 
         // -- UI 캐싱 --
         private VisualElement _savingsRoot;
+
+        private Label _lblSavingsTitle;
+
+        private Label _lblSavingsLevelTitle;
         private Label _lblSavingsLevel;
+
+        private Label _lblTotalSavingsTitle;
         private Label _lblTotalSavings;
-        private SliderInt _sldAmount;
+
+        private Label _lblSelectedAmountTitle;
         private Label _lblSelectedAmount;
+        private SliderInt _sldAmount;
 
         private Button _btnDeposit;
         private Button _btnWithdraw;
@@ -28,11 +37,17 @@ namespace BlackMarket
         {
             _savingsRoot = root;
 
-            // UI 요소 찾기
-            _lblSavingsLevel = _savingsRoot.Q<Label>("Lbl_SavingsLevel");
-            _lblTotalSavings = _savingsRoot.Q<Label>("Lbl_TotalSavings");
+            _lblSavingsTitle = _savingsRoot.Q<Label>("SavingsTitle");
+
+            _lblSavingsLevelTitle = _savingsRoot.Q<VisualElement>("CurSavingsLevel").Q<Label>("Title");
+            _lblSavingsLevel = _savingsRoot.Q<VisualElement>("CurSavingsLevel").Q<Label>("Value");
+
+            _lblTotalSavingsTitle = _savingsRoot.Q<VisualElement>("CumulativeSavings").Q<Label>("Title");
+            _lblTotalSavings = _savingsRoot.Q<VisualElement>("CumulativeSavings").Q<Label>("Value");
+
+            _lblSelectedAmountTitle = _savingsRoot.Q<VisualElement>("TransactionAmount").Q<Label>("Title");
+            _lblSelectedAmount = _savingsRoot.Q<VisualElement>("TransactionAmount").Q<Label>("Value");
             _sldAmount = _savingsRoot.Q<SliderInt>("Sld_Amount");
-            _lblSelectedAmount = _savingsRoot.Q<Label>("Lbl_SelectedAmount");
 
             _btnDeposit = _savingsRoot.Q<Button>("Btn_Deposit");
             _btnWithdraw = _savingsRoot.Q<Button>("Btn_Withdraw");
@@ -80,8 +95,8 @@ namespace BlackMarket
         /// </summary>
         public void UpdateUI(int curLevel, int totalSavings)
         {
-            if (_lblSavingsLevel != null) _lblSavingsLevel.text = $"Lv. {curLevel}";
-            if (_lblTotalSavings != null) _lblTotalSavings.text = $"{totalSavings:N0} G";
+            _lblSavingsLevel.text = $"Lv. {curLevel}";
+            _lblTotalSavings.text = $"{totalSavings:N0} G";
         }
 
         /// <summary>
@@ -100,6 +115,19 @@ namespace BlackMarket
         {
             if (_sldAmount == null) return;
             OnWithdrawRequested?.Invoke(_sldAmount.value);
+        }
+
+        public void RefreshTranslation()
+        {
+            if (_savingsRoot != null) {
+                _lblSavingsTitle.text = LocalizationManager.GetText(UIKeys.BlackMarket.SAVINGS_TITLE);
+                _lblSavingsLevelTitle.text = LocalizationManager.GetText(UIKeys.BlackMarket.SAVINGS_CUR_LEVEL);
+                _lblTotalSavingsTitle.text = LocalizationManager.GetText(UIKeys.BlackMarket.SAVINGS_ACCUMULATE);
+                _lblSelectedAmountTitle.text = LocalizationManager.GetText(UIKeys.BlackMarket.SAVINGS_TRANSACTION_AMOUNT);
+                _btnDeposit.text = LocalizationManager.GetText(UIKeys.BlackMarket.BTN_SAVINGS_DEPOSIT);
+                _btnWithdraw.text = LocalizationManager.GetText(UIKeys.BlackMarket.BTN_SAVINGS_WITHDRAW);
+                _btnClose.text = LocalizationManager.GetText(UIKeys.Common.BTN_CLOSE);
+            }
         }
     }
 }
