@@ -34,9 +34,12 @@ namespace Utils
         {
             public const string TOTAL_COIN_TITLE = "UI_BM_TotalCoin_Title";
 
+            public const string BTN_PURCHASE = "UI_BM_Btn_Purchase";
             public const string BTN_REFRESH = "UI_BM_Btn_Refresh";
             public const string BTN_SAVINGS = "UI_BM_Btn_Savings";
             public const string BTN_MEMBERSHIP = "UI_BM_Btn_Membership";
+
+            public const string PURCHASE_REQUIRED_AMOUNT_TITLE = "UI_BlackMarket_Purchase_RequiredAmount";
 
             public const string SAVINGS_TITLE = "UI_BM_Savings_Title";
             public const string SAVINGS_CUR_LEVEL = "UI_BM_Savings_CurrentLevel";

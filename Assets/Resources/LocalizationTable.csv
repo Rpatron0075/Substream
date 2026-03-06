@@ -15,9 +15,11 @@ UI_Setting_Language_Title,언어,Language,言語,语言
 UI_Setting_Language_Dropdown_Title,게임 표시 언어,Game Display Language,ゲーム表示言語,游戏标识语言
 UI_Setting_Language_Description,* 언어를 변경하면 즉시 게임 내 UI에 반영됩니다.,"* If you change the language, it will be immediately reflected in the in-game UI.",* 言語を変更すると、すぐにゲーム内UIに反映されます。,* 更改语言后会立即反映到游戏内的UI上。
 UI_BM_TotalCoin_Title,보유 재화,Possession,所持資産,库存货物
+UI_BM_Btn_Purchase,구매,Purchase,購買,购买
 UI_BM_Btn_Refresh,새로고침,Refresh,リフレッシュ,重新装入
 UI_BM_Btn_Savings,저축,Savings,貯蓄,储蓄
 UI_BM_Btn_Membership,멤버십,Membership,メンバーシップ,成员资格
+UI_BlackMarket_Purchase_RequiredAmount,필요 금액   ,Required Amount,必要金額   ,所需金额   
 UI_BM_Savings_Title,블랙마켓 뱅크,Black Market Bank,ブラックマーケットバンク,黑市银行
 UI_BM_Savings_CurrentLevel,현재 저축 단계,Current Savings Stage,現在の貯蓄段階,当前储蓄阶段
 UI_BM_Savings_Accumulate,누적 저축액,Cumulative Savings,累積貯蓄額,累积储蓄额

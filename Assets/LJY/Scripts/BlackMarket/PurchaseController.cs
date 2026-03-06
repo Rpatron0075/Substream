@@ -11,12 +11,15 @@ namespace BlackMarket
     {
         // -- UI 캐싱 --
         private VisualElement _purchaseRoot;
+
         private Label _popupName;
         private Label _popupInfo;
         private Label _popupPrice;
+
         private VisualElement _popupIcon;
         private VisualElement _popupBackground;
 
+        private Label _requiredAmountTitle;
         private Button _btnBuy;
         private Button _btnCancel;
 
@@ -39,6 +42,7 @@ namespace BlackMarket
             _popupPrice = _purchaseRoot.Q<Label>("Lbl_PopupPrice");
             _popupIcon = _purchaseRoot.Q<VisualElement>("Img_PopupIcon");
             _popupBackground = _purchaseRoot.Q<VisualElement>("Img_PopupIcon");
+            _requiredAmountTitle = _purchaseRoot.Q<VisualElement>("RequiredAmount").Q<Label>("Title");
 
             // 자신이 담당하는 버튼 이벤트는 스스로 연결
             _btnBuy = _purchaseRoot.Q<Button>("Btn_Buy");
@@ -96,11 +100,21 @@ namespace BlackMarket
         /// </summary>
         public void RefreshTranslation()
         {
-            if (_purchaseRoot != null && _selectedItemData != null) {
-                _purchaseRoot.name = LocalizationManager.GetText(UIKeys.Common.BTN_CONFIRM);
+            if (_purchaseRoot == null) return;
 
-                _popupName.text = LocalizationManager.GetText(_selectedItemData.Name);
-                _popupInfo.text = LocalizationManager.GetText(_selectedItemData.Info);
+            if (_requiredAmountTitle != null) 
+                _requiredAmountTitle.text = LocalizationManager.GetText(UIKeys.BlackMarket.PURCHASE_REQUIRED_AMOUNT_TITLE);
+
+            if (_btnBuy != null)
+                _btnBuy.text = LocalizationManager.GetText(UIKeys.BlackMarket.BTN_PURCHASE);
+
+            if (_btnCancel != null)
+                _btnCancel.text = LocalizationManager.GetText(UIKeys.Common.BTN_CLOSE);
+
+
+            if (_selectedItemData != null) {
+                if (_popupName != null) _popupName.text = LocalizationManager.GetText(_selectedItemData.Name);
+                if (_popupInfo != null) _popupInfo.text = LocalizationManager.GetText(_selectedItemData.Info);
             }
         }
     }

@@ -44,6 +44,10 @@ namespace Utils
 
         public void Initialize(VisualElement root)
         {
+            if (root == null) {
+                Debug.LogWarning("Root 미할당");
+                return;
+            }
             _characterButton = root.Q<Button>(CHAR_BUTTON);
             _characterArea = root.Q<VisualElement>(CHAR_IMAGE);
 

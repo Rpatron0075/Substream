@@ -216,14 +216,10 @@ namespace BlackMarket
             AudioController.Instance.PlaySFX(AudioKeys.SFX_DOOR);
             _dmBlackMarket.PlayDialogue(DialogueKeys.BlackMarket.EXIT, null);
 
-            if (_blackMarketRoot != null) {
-                _blackMarketRoot.RemoveFromHierarchy(); // UI 제거
-                _blackMarketRoot = null;
-            }
+            _blackMarketRoot?.RemoveFromHierarchy(); // UI 제거
+            _blackMarketRoot = null;
 
-            if (_cwController != null) {
-                _cwController.OnCharacterClicked -= HandleCharacterClick;
-            }
+            _cwController.OnCharacterClicked -= HandleCharacterClick;
         }
 
         // ----- 캐릭터 위젯 기능 -----
@@ -255,12 +251,14 @@ namespace BlackMarket
                 Debug.LogError("UIDocument 미할당");
                 return;
             }
-            if (_blackMarketUXML == null) {
-                Debug.LogError("블랙마켓 UXML 미할당");
-                return;
-            }
-            if (_itemSlotUXML == null) {
-                Debug.LogError("아이템 슬롯 UXML 미할당");
+            if (!_blackMarketUXML || !_itemSlotUXML || !_purchaseUXML || !_savingsUXML || !_membershipUXML || !_settingPanelUXML) {
+                Debug.LogError($"UXML 미할당\n" +
+                    $"  {_blackMarketUXML}\n" +
+                    $"  {_itemSlotUXML}\n" +
+                    $"   {_purchaseUXML}\n" +
+                    $"   {_savingsUXML}\n" +
+                    $"   {_membershipUXML}\n" +
+                    $"    {_settingPanelUXML}\n");
                 return;
             }
 
@@ -268,22 +266,23 @@ namespace BlackMarket
             _blackMarketRoot = _blackMarketUXML.Instantiate();
             _blackMarketRoot.style.flexGrow = 1;
             _blackMarketUID.rootVisualElement.Add(_blackMarketRoot);
+            _blackMarketRoot.style.visibility = Visibility.Hidden;
 
-            if (_cwController != null) {
-                _cwController.Initialize(_blackMarketRoot);
-                _cwController.OnCharacterClicked += HandleCharacterClick;
-            }
+            // 캐릭터 위젯 초기화 및 이벤트 연결
+            _cwController?.Initialize(_blackMarketRoot);
+            _cwController.OnCharacterClicked += HandleCharacterClick;
+
+            // 블랙마켓 UI 연결
             _coinTitleLabel = _blackMarketRoot.Q<VisualElement>("Coin_Panel").Q<Label>("Title");
             _coinValue = _blackMarketRoot.Q<VisualElement>("Coin_Panel").Q<Label>("Value");
             _slotContainer = _blackMarketRoot.Q<VisualElement>("Item_Grid_Container");
 
+            // 팝업 패널 UI 생성
             CreateAndHidePanels();
 
-            // 버튼 이벤트 연결
-            if (_btnController != null) {
-                _btnController.ConnectButtonEvt(_blackMarketRoot);
-                _btnController.UpdateMembershipBtnText(CurMembershipLevel);
-            }
+            // 메인 버튼 이벤트 연결
+            _btnController?.ConnectButtonEvt(_blackMarketRoot);
+            _btnController?.UpdateMembershipBtnText(CurMembershipLevel);
 
             // 저축/멤버십 효과 계산
             CalculateSavingsEffect(curSavings);
@@ -313,7 +312,7 @@ namespace BlackMarket
                 _slotContainer.Add(slot);
 
                 ItemSlotController slotController = new ItemSlotController(slot, i);
-                slotController.OnSlotClicked += HandleSlotClicked; // 슬롯이 클릭되었을 때 실행할 매니저의 함수를 연결
+                slotController.OnSlotClicked += HandleSlotClicked; // 슬롯이 클릭되었을 때 실행될 함수를 연결
                 _slotControllers.Add(slotController);
             }
 
@@ -342,6 +341,9 @@ namespace BlackMarket
                 // 조건에 맞는 아이템 풀 사전 생성
                 _itemDatabase.CreateItemPool(curPartyIDs, ownedOpartsIDs);
             }
+
+            // 아이템을 UI에 등기함
+            RegistMarketItems();
         }
 
         // ----- 팝업 생성/초기화 기능 -----
@@ -417,17 +419,21 @@ namespace BlackMarket
         /// </summary>
         public void StartMarket()
         {
-            RegistMarketItems();
-
+            // 설정된 언어로 번역
             SettingPanelController.Instance.RefreshTranslation();
             _purchaseController.RefreshTranslation();
             _savingsController.RefreshTranslation();
             _membershipController.RefreshTranslation();
 
+            // 오디오 이벤트
             AudioController.Instance.PlayBGM(AudioKeys.BGM_BLACKMARKET);
             AudioController.Instance.PlaySFX(AudioKeys.SFX_DOOR);
             AudioController.Instance.PlaySFX(AudioKeys.SFX_DOORBELL);
+
+            // 입장 시 대사, VO 출력
             _dmBlackMarket.PlayDialogue(DialogueKeys.BlackMarket.ENTER, _cwController);
+
+            _blackMarketRoot.style.visibility = Visibility.Visible;
         }
          
         // ----- 아이템 슬롯 기능 -----
@@ -452,9 +458,7 @@ namespace BlackMarket
             }
 
             _curRefreshState = (_additiveRefreshingCount > 0) ? RefreshState.Active : RefreshState.Disabled;
-            if (_btnController != null) {
-                _btnController.UpdateSavingsBtnText(CurSavingsLevel);
-            }
+            _btnController?.UpdateSavingsBtnText(CurSavingsLevel);
         }
 
         /// <summary>
@@ -822,9 +826,7 @@ namespace BlackMarket
                 _curProbability = rarityProbabilities[CurMembershipLevel];
 
                 // UI 갱신
-                if (_btnController != null) {
-                    _btnController.UpdateMembershipBtnText(CurMembershipLevel);
-                }
+                _btnController?.UpdateMembershipBtnText(CurMembershipLevel);
 
                 bool isMaxLevel = CurMembershipLevel >= membershipThresholds.Count - 1;
                 int nextCost = isMaxLevel ? -1 : membershipThresholds[CurMembershipLevel + 1];
