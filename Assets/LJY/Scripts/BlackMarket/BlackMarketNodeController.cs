@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using BlackMarket;
 
 namespace UI.BlackMarket
 {

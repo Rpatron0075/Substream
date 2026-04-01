@@ -1,6 +1,6 @@
 using UnityEngine.UIElements;
 
-namespace UI.Utils
+namespace Utils
 {
     /// <summary>
     /// VisualElement의 페이드 인앤 아웃을 제어함
