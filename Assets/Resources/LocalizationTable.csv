@@ -170,3 +170,11 @@ Item_Name_2029,시공 절단,Space-Time Rift,時空切断,时空斩
 Item_Info_2029,공간을 베어내어 방어력을 무시하는 피해를 줍니다.,"Slashes through space, dealing damage that ignores armor.",空間を切り裂き、防御力を無視するダメージを与えます。,斩断空间，造成无视防御力的伤害。
 Item_Name_2030,신의 심판,Wrath of the Gods,神の裁き,神之审判
 Item_Info_2030,하늘에서 파멸의 빛줄기가 쏟아져 내립니다.,Rays of ruinous light pour down from the sky.,空から破滅の光の筋が降り注ぎます。,毁灭的光芒从天而降。
+NAME_PLAYER,용사,Hero,勇者,勇者
+NAME_NPC,마을 사람,Villager,村人,村民
+NAME_ENEMY,암살자,Assassin,暗殺者,刺客
+EP01_TXT_001,이상하군... 주변이 너무 조용한데.,Strange... It's too quiet around here.,おかしいな… 周りが静かすぎる。,真奇怪……周围太安静了。
+EP01_TXT_002,용사님! 조심하세요. 등 뒤의 그림자에서 무언가 움직였습니다!,Hero! Watch out. Something moved in the shadows behind you!,勇者様！気をつけて。背後の影で何かが動きました！,勇者大人！小心。你背后的阴影里有东西在动！
+EP01_TXT_003,"큭, 함정인가. 모두 무기를 들어라!","Ugh, a trap. Everyone, draw your weapons!",くっ、罠か。皆、武器を構えろ！,呃，是陷阱吗。大家举起武器！
+EP01_TXT_004,크히힛! 눈치는 빠르지만 이미 늦었다. 네놈들의 목숨을 가져가주마!,"Hehe! Quick wits, but too late. I'll take your lives!",ヒヒッ！勘はいいが遅すぎた。貴様らの命、もらうぞ！,嘿嘿！反应挺快但已经晚了。我要拿走你们的命！
+EP01_TXT_005,"안 돼! 용사님, 제가 방패막이가 되겠습니다!","No! Hero, I will be your shield!",駄目です！勇者様、私が盾になります！,不行！勇者大人，我来当你的盾牌！

@@ -355,7 +355,7 @@ namespace BlackMarket
             // --- 세팅 패널 ---
             if (_settingPanelUXML != null) {
                 VisualElement settingRoot = _settingPanelUXML.Instantiate();
-                SetAbsolutePosition(settingRoot);
+                settingRoot.SetAbsolutePosition();
                 settingRoot.style.display = DisplayStyle.None;
                 settingRoot.AddToClassList("popup-fade-base");
                 _blackMarketRoot.Add(settingRoot);
@@ -368,7 +368,7 @@ namespace BlackMarket
             // --- 구매 팝업 패널 ---
             if (_purchaseUXML != null) {
                 VisualElement purchaseRoot = _purchaseUXML.Instantiate();
-                SetAbsolutePosition(purchaseRoot);
+                purchaseRoot.SetAbsolutePosition();
                 purchaseRoot.style.display = DisplayStyle.None;
                 purchaseRoot.AddToClassList("popup-fade-base");
                 _blackMarketRoot.Add(purchaseRoot);
@@ -379,7 +379,7 @@ namespace BlackMarket
             // --- 저축 팝업 패널 ---
             if (_savingsUXML != null) {
                 VisualElement savingsRoot = _savingsUXML.Instantiate();
-                SetAbsolutePosition(savingsRoot);
+                savingsRoot.SetAbsolutePosition();
                 savingsRoot.style.display = DisplayStyle.None;
                 savingsRoot.AddToClassList("popup-fade-base");
                 _blackMarketRoot.Add(savingsRoot);
@@ -390,27 +390,13 @@ namespace BlackMarket
             // --- 멤버십 팝업 패널 ---
             if (_membershipUXML != null) {
                 VisualElement membershipRoot = _membershipUXML.Instantiate();
-                SetAbsolutePosition(membershipRoot);
+                membershipRoot.SetAbsolutePosition();
                 membershipRoot.style.display = DisplayStyle.None;
                 membershipRoot.AddToClassList("popup-fade-base");
                 _blackMarketRoot.Add(membershipRoot);
 
                 _membershipController.ConnectUI(membershipRoot);
             }
-        }
-
-        /// <summary>
-        /// 생성된 팝업 패널 VisualTree를 화면 전체 사이즈에 맞도록 수정
-        /// </summary>
-        /// <param name="root">UXML 파일 상의 Root Element</param>
-        private void SetAbsolutePosition(VisualElement root)
-        {
-            root.style.position = Position.Absolute;
-            root.style.top = 0;
-            root.style.bottom = 0;
-            root.style.left = 0;
-            root.style.right = 0;
-            root.style.flexGrow = 1;
         }
 
         // ----- 시작 기능 -----
